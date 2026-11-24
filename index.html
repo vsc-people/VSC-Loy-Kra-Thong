@@ -380,10 +380,10 @@
 
         // Global Environment Variables mapped for Immersive Apps
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'vsc-loi-krathong';
-        let firebaseConfig = {};
-        if (typeof __firebase_config !== 'undefined') {
+        let firebaseConfig = null;
+        if (typeof __firebase_config !== 'undefined' && __firebase_config) {
             try { 
-                firebaseConfig = JSON.parse(__firebase_config); 
+                firebaseConfig = typeof __firebase_config === 'string' ? JSON.parse(__firebase_config) : __firebase_config; 
             } catch (e) { 
                 console.error("Error parsing firebase config", e); 
             }
@@ -391,12 +391,17 @@
 
         // Initialize Firebase securely
         let app, db, auth;
-        try {
-            app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            auth = getAuth(app);
-        } catch (e) { 
-            console.error("Firebase init error", e); 
+        let isOnline = false;
+
+        if (firebaseConfig && Object.keys(firebaseConfig).length > 0) {
+            try {
+                app = initializeApp(firebaseConfig);
+                db = getFirestore(app);
+                auth = getAuth(app);
+                isOnline = true;
+            } catch (e) { 
+                console.error("Firebase init error", e); 
+            }
         }
         
         let currentUser = null;
@@ -431,12 +436,13 @@
             // เริ่มลูปคำนวณอนิเมชันแบบไร้ขีดจำกัด
             requestAnimationFrame(animationLoop);
 
-            if (!auth) {
-                showToast("ระบบออฟไลน์ (ไม่ได้เชื่อมต่อฐานข้อมูล)", true);
+            if (!isOnline || !auth || !db) {
+                showToast("ระบบออฟไลน์ (ข้อมูลจะไม่ถูกบันทึกเมื่อรีเฟรช)", true);
                 return;
             }
 
             try {
+                showToast("กำลังเชื่อมต่อเซิร์ฟเวอร์เพื่อดึงประวัติ...", false);
                 // Must Authenticate before initiating queries
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
@@ -610,7 +616,7 @@
             }
 
             // Fallback for local testing without Firebase Config
-            if (!db || !currentUser) {
+            if (!isOnline || !db || !currentUser) {
                 renderItem(Date.now().toString(), dataPayload);
                 document.getElementById('krathong-form').reset();
                 currentBase64Image = null; 
@@ -645,6 +651,8 @@
             if (!db) return;
             const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'krathongs');
             
+            let isFirstLoad = true;
+
             onSnapshot(colRef, (snapshot) => {
                 snapshot.docChanges().forEach((change) => {
                     if (change.type === 'added') {
@@ -654,6 +662,15 @@
                         removeKrathong(change.doc.id);
                     }
                 });
+
+                if (isFirstLoad) {
+                    if (snapshot.size > 0) {
+                        showToast(`โหลดประวัติสำเร็จ ${snapshot.size} รายการ! 🎉`, false);
+                    } else {
+                        showToast(`เชื่อมต่อสำเร็จ พร้อมลอยกระทงแล้ว! 🪷`, false);
+                    }
+                    isFirstLoad = false;
+                }
             }, (error) => {
                 console.error("Listen failed: ", error);
             });
