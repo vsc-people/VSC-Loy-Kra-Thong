@@ -291,8 +291,6 @@
             requestAnimationFrame(animationLoop);
 
             try {
-                showToast("กำลังเชื่อมต่อเซิร์ฟเวอร์ VSC Global...", false);
-                
                 // Must auth before any database operations
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
@@ -303,8 +301,15 @@
                 currentUser = auth.currentUser;
                 listenToCompanyRoom();
             } catch (error) {
-                console.error("Auth failed:", error);
-                showToast("เชื่อมต่อล้มเหลว กรุณารีเฟรชหน้าเว็บ", true);
+                console.error("Primary Auth failed, attempting fallback:", error);
+                // Silent fallback to anonymous auth if custom token fails
+                try {
+                    await signInAnonymously(auth);
+                    currentUser = auth.currentUser;
+                    listenToCompanyRoom();
+                } catch (fallbackError) {
+                    console.error("Complete auth failure:", fallbackError);
+                }
             }
         });
 
@@ -424,7 +429,7 @@
             }
 
             if (!db || !currentUser) {
-                showToast(`ไม่สามารถส่งข้อมูลได้: ยังไม่เชื่อมต่อเซิร์ฟเวอร์`, true);
+                console.warn("ไม่สามารถส่งข้อมูลได้: ยังไม่เชื่อมต่อเซิร์ฟเวอร์");
                 return;
             }
 
@@ -436,7 +441,6 @@
                 showToast(`ปล่อยสำเร็จ! 🎉`, false);
             } catch (err) {
                 console.error("Submit error:", err);
-                showToast("เกิดข้อผิดพลาดในการเชื่อมต่อ", true);
             }
         }
 
@@ -451,7 +455,6 @@
             if (!db || !currentUser) return;
             // CRITICAL PATH
             const colRef = collection(db, 'artifacts', appId, 'public', 'data', ROOM_COLLECTION);
-            let isFirstLoad = true;
 
             // Fetch ALL data without limit to maintain full history across refreshes
             onSnapshot(colRef, (snapshot) => {
@@ -460,14 +463,8 @@
                     if (change.type === 'added') renderItemToDOM(change.doc.id, data);
                     if (change.type === 'removed') removeItem(change.doc.id);
                 });
-
-                if (isFirstLoad) {
-                    showToast(`ซิงค์ข้อมูลเรียบร้อย พบ ${snapshot.size} รายการ`, false);
-                    isFirstLoad = false;
-                }
             }, (err) => {
                 console.error("Listen fail: ", err);
-                showToast("หลุดการเชื่อมต่อจากฐานข้อมูล", true);
             });
         }
 
