@@ -1,0 +1,906 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>VSC ลอยกระทงออนไลน์</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Prompt for Thai typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Prompt', sans-serif;
+            overflow: hidden;
+            background-color: #020617; /* Slate 950 fallback */
+        }
+
+        /* Environments */
+        .sky-gradient {
+            background: linear-gradient(180deg, #0f172a 0%, #1e1b4b 60%, #172554 100%);
+        }
+        
+        .river-gradient {
+            background: linear-gradient(180deg, #082f49 0%, #020617 100%);
+            box-shadow: inset 0 20px 50px rgba(0,0,0,0.5);
+        }
+
+        /* Moon and Reflections */
+        .moon {
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, #fffedf 0%, #fdf49a 50%, #f7e05e 100%);
+            border-radius: 50%;
+            box-shadow: 0 0 60px 15px rgba(253, 244, 154, 0.4), 
+                        inset -10px -10px 20px rgba(0,0,0,0.1);
+        }
+        
+        .moon-reflection {
+            width: 150px;
+            height: 200px;
+            background: linear-gradient(180deg, rgba(253, 244, 154, 0.3) 0%, rgba(253, 244, 154, 0) 100%);
+            border-radius: 50%;
+            filter: blur(15px);
+            transform: scaleY(0.3);
+            transform-origin: top;
+        }
+
+        /* Stars Animation */
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.8; transform: scale(1); }
+            50% { opacity: 0.2; transform: scale(0.8); }
+        }
+        .star {
+            position: absolute;
+            background: white;
+            border-radius: 50%;
+            animation: twinkle infinite alternate ease-in-out;
+        }
+
+        /* Krathong Animations */
+        @keyframes drift {
+            0% { left: -300px; }
+            100% { left: calc(100vw + 100px); }
+        }
+        
+        @keyframes bob {
+            0%, 100% { transform: translateY(0px) rotate(-3deg); }
+            50% { transform: translateY(-8px) rotate(3deg); }
+        }
+        
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 0.6; transform: scale(1); }
+            50% { opacity: 0.9; transform: scale(1.2); }
+        }
+
+        /* Lantern Animations */
+        @keyframes float-up {
+            0% { bottom: -100px; opacity: 1; }
+            80% { opacity: 1; }
+            100% { bottom: 120vh; opacity: 0; }
+        }
+
+        @keyframes sway {
+            0%, 100% { transform: translateX(0px) rotate(-4deg); }
+            50% { transform: translateX(25px) rotate(4deg); }
+        }
+
+        .lantern-wrapper {
+            position: absolute;
+            will-change: bottom, transform;
+        }
+
+        .lantern-body {
+            animation: sway 4s ease-in-out infinite;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .krathong-wrapper {
+            position: absolute;
+            /* Will be animated via inline styles for synchronized delay/duration */
+            will-change: left; 
+        }
+
+        .krathong-bob {
+            animation: bob 3.5s ease-in-out infinite;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .candle-flame {
+            width: 8px;
+            height: 12px;
+            background: #fcd34d;
+            border-radius: 50% 50% 20% 20%;
+            box-shadow: 0 0 15px 5px rgba(251, 146, 60, 0.6);
+            animation: pulse-glow 1.5s infinite alternate ease-in-out;
+        }
+
+        /* Glassmorphism for UI */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Custom Scrollbar for Wish text if needed */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+    </style>
+</head>
+<body class="text-white h-screen w-screen flex flex-col relative">
+
+    <!-- Sky Section -->
+    <div id="sky" class="sky-gradient h-[55%] relative w-full z-0 overflow-hidden">
+        <!-- Stars will be injected here -->
+        
+        <!-- Moon -->
+        <div class="absolute top-10 right-10 md:top-16 md:right-24">
+            <div class="moon"></div>
+        </div>
+
+        <!-- Header -->
+        <div class="absolute top-0 left-0 w-full pt-8 pb-4 text-center z-20 pointer-events-none">
+            <h1 class="text-4xl md:text-5xl font-bold tracking-wider drop-shadow-[0_0_15px_rgba(255,255,255,0.8)] text-transparent bg-clip-text bg-gradient-to-b from-yellow-100 to-yellow-400">
+                VSC ลอยกระทงออนไลน์
+            </h1>
+            <p class="text-indigo-200 mt-2 text-sm md:text-base font-light tracking-wide">ร่วมสืบสานประเพณีไทยและขอพรไปด้วยกัน</p>
+        </div>
+    </div>
+
+    <!-- River Section -->
+    <div id="river" class="river-gradient h-[45%] relative w-full z-10">
+        <!-- Moon reflection -->
+        <div class="absolute top-0 right-10 md:right-24 moon-reflection"></div>
+        
+        <!-- Krathongs container -->
+        <div id="krathong-container" class="absolute inset-0 w-full h-full pointer-events-none"></div>
+    </div>
+
+    <!-- Floating Action Buttons -->
+    <div class="absolute bottom-6 left-0 w-full flex justify-center gap-4 z-30 px-4">
+        <button id="btn-open-krathong" class="glass-panel px-6 py-3 rounded-full shadow-[0_0_20px_rgba(59,130,246,0.3)] hover:bg-white/10 hover:scale-105 transition-all duration-300 flex items-center gap-2 border-white/20">
+            <span class="text-xl">🪷</span>
+            <span class="font-semibold text-sm md:text-base tracking-wide text-blue-50">ลอยกระทง</span>
+        </button>
+        <button id="btn-open-lantern" class="glass-panel px-6 py-3 rounded-full shadow-[0_0_20px_rgba(251,146,60,0.3)] hover:bg-white/10 hover:scale-105 transition-all duration-300 flex items-center gap-2 border-white/20">
+            <span class="text-xl">🏮</span>
+            <span class="font-semibold text-sm md:text-base tracking-wide text-orange-50">ปล่อยโคมลอย</span>
+        </button>
+    </div>
+
+    <!-- Form Modal -->
+    <div id="krathong-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300 hidden">
+        <div class="glass-panel w-[90%] max-w-md max-h-[90vh] overflow-y-auto rounded-2xl p-6 md:p-8 transform scale-95 transition-transform duration-300" id="modal-content">
+            
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-semibold text-yellow-300" id="modal-title">สร้างกระทงของคุณ</h2>
+                <button id="btn-close-modal" class="text-gray-400 hover:text-white transition-colors text-2xl">&times;</button>
+            </div>
+
+            <form id="krathong-form" class="space-y-5">
+                <div>
+                    <label class="block text-sm text-blue-200 mb-1">ชื่อ - นามสกุล (หรือชื่อเล่น)</label>
+                    <input type="text" id="k-name" required maxlength="30" placeholder="ระบุชื่อของคุณ" 
+                        class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition-all">
+                </div>
+                
+                <div>
+                    <label class="block text-sm text-blue-200 mb-1">คำอธิษฐานขอพร</label>
+                    <textarea id="k-wish" required maxlength="120" rows="3" placeholder="เขียนคำอธิษฐานสิ่งดีๆ..." 
+                        class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition-all resize-none"></textarea>
+                </div>
+
+                <!-- Image Upload Section -->
+                <div>
+                    <label class="block text-sm text-blue-200 mb-1">ใส่รูปภาพ (ถ้ามี)</label>
+                    <div class="flex items-center gap-4">
+                        <input type="file" id="k-image" accept="image/*" class="w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-blue-500/20 file:text-blue-200 hover:file:bg-blue-500/30 transition-all cursor-pointer">
+                        <img id="k-image-preview" src="" class="hidden w-12 h-12 rounded-full object-cover border-2 border-white/20 shadow-md">
+                    </div>
+                </div>
+
+                <!-- Krathong Style Selector -->
+                <div id="krathong-options" class="space-y-4 transition-all duration-300">
+                    <div>
+                        <label class="block text-sm text-blue-200 mb-2">เลือกฐานกระทง (Base)</label>
+                        <div class="grid grid-cols-3 gap-2 md:gap-3">
+                            <label class="cursor-pointer relative text-center">
+                                <input type="radio" name="k-base" value="banana" checked class="peer sr-only">
+                                <div class="p-2 md:p-3 rounded-xl border border-white/10 peer-checked:border-yellow-400 peer-checked:bg-yellow-400/20 transition-all hover:bg-white/5 shadow-sm">
+                                    <div class="text-2xl md:text-3xl mb-1">🌿</div>
+                                    <div class="text-[10px] md:text-xs font-medium">ใบตอง</div>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer relative text-center">
+                                <input type="radio" name="k-base" value="lotus" class="peer sr-only">
+                                <div class="p-2 md:p-3 rounded-xl border border-white/10 peer-checked:border-yellow-400 peer-checked:bg-yellow-400/20 transition-all hover:bg-white/5 shadow-sm">
+                                    <div class="text-2xl md:text-3xl mb-1 drop-shadow-md">🪷</div>
+                                    <div class="text-[10px] md:text-xs font-medium">ดอกบัว</div>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer relative text-center">
+                                <input type="radio" name="k-base" value="coconut" class="peer sr-only">
+                                <div class="p-2 md:p-3 rounded-xl border border-white/10 peer-checked:border-yellow-400 peer-checked:bg-yellow-400/20 transition-all hover:bg-white/5 shadow-sm">
+                                    <div class="text-2xl md:text-3xl mb-1">🥥</div>
+                                    <div class="text-[10px] md:text-xs font-medium">กะลา</div>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer relative text-center">
+                                <input type="radio" name="k-base" value="bread" class="peer sr-only">
+                                <div class="p-2 md:p-3 rounded-xl border border-white/10 peer-checked:border-yellow-400 peer-checked:bg-yellow-400/20 transition-all hover:bg-white/5 shadow-sm">
+                                    <div class="text-2xl md:text-3xl mb-1">🍞</div>
+                                    <div class="text-[10px] md:text-xs font-medium">ขนมปัง</div>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer relative text-center">
+                                <input type="radio" name="k-base" value="ice" class="peer sr-only">
+                                <div class="p-2 md:p-3 rounded-xl border border-white/10 peer-checked:border-yellow-400 peer-checked:bg-yellow-400/20 transition-all hover:bg-white/5 shadow-sm">
+                                    <div class="text-2xl md:text-3xl mb-1">🧊</div>
+                                    <div class="text-[10px] md:text-xs font-medium">น้ำแข็ง</div>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer relative text-center">
+                                <input type="radio" name="k-base" value="paper" class="peer sr-only">
+                                <div class="p-2 md:p-3 rounded-xl border border-white/10 peer-checked:border-yellow-400 peer-checked:bg-yellow-400/20 transition-all hover:bg-white/5 shadow-sm">
+                                    <div class="text-2xl md:text-3xl mb-1">♻️</div>
+                                    <div class="text-[10px] md:text-xs font-medium">กระดาษ</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm text-blue-200 mb-2">เลือกดอกไม้ประดับ (Decorations)</label>
+                        <div class="grid grid-cols-3 gap-2 md:gap-3">
+                            <label class="cursor-pointer relative text-center">
+                                <input type="radio" name="k-flower" value="marigold" checked class="peer sr-only">
+                                <div class="p-2 md:p-3 rounded-xl border border-white/10 peer-checked:border-pink-400 peer-checked:bg-pink-400/20 transition-all hover:bg-white/5 shadow-sm">
+                                    <div class="text-2xl md:text-3xl mb-1">🌼</div>
+                                    <div class="text-[10px] md:text-xs font-medium">ดาวเรือง</div>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer relative text-center">
+                                <input type="radio" name="k-flower" value="orchid" class="peer sr-only">
+                                <div class="p-2 md:p-3 rounded-xl border border-white/10 peer-checked:border-pink-400 peer-checked:bg-pink-400/20 transition-all hover:bg-white/5 shadow-sm">
+                                    <div class="text-2xl md:text-3xl mb-1">🌺</div>
+                                    <div class="text-[10px] md:text-xs font-medium">กล้วยไม้</div>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer relative text-center">
+                                <input type="radio" name="k-flower" value="rose" class="peer sr-only">
+                                <div class="p-2 md:p-3 rounded-xl border border-white/10 peer-checked:border-pink-400 peer-checked:bg-pink-400/20 transition-all hover:bg-white/5 shadow-sm">
+                                    <div class="text-2xl md:text-3xl mb-1">🌹</div>
+                                    <div class="text-[10px] md:text-xs font-medium">กุหลาบ</div>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer relative text-center">
+                                <input type="radio" name="k-flower" value="jasmine" class="peer sr-only">
+                                <div class="p-2 md:p-3 rounded-xl border border-white/10 peer-checked:border-pink-400 peer-checked:bg-pink-400/20 transition-all hover:bg-white/5 shadow-sm">
+                                    <div class="text-2xl md:text-3xl mb-1">🤍</div>
+                                    <div class="text-[10px] md:text-xs font-medium">มะลิ</div>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer relative text-center">
+                                <input type="radio" name="k-flower" value="amaranth" class="peer sr-only">
+                                <div class="p-2 md:p-3 rounded-xl border border-white/10 peer-checked:border-pink-400 peer-checked:bg-pink-400/20 transition-all hover:bg-white/5 shadow-sm">
+                                    <div class="text-2xl md:text-3xl mb-1">🌸</div>
+                                    <div class="text-[10px] md:text-xs font-medium">บานไม่รู้โรย</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm text-blue-200 mb-2">ของประดับ (Extras)</label>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
+                            <label class="cursor-pointer relative text-center">
+                                <input type="radio" name="k-extra" value="candle" checked class="peer sr-only">
+                                <div class="p-2 rounded-xl border border-white/10 peer-checked:border-orange-400 peer-checked:bg-orange-400/20 transition-all hover:bg-white/5 shadow-sm">
+                                    <div class="text-2xl mb-1">🕯️</div>
+                                    <div class="text-[10px] md:text-xs font-medium">ธูปเทียน</div>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer relative text-center">
+                                <input type="radio" name="k-extra" value="sparkler" class="peer sr-only">
+                                <div class="p-2 rounded-xl border border-white/10 peer-checked:border-orange-400 peer-checked:bg-orange-400/20 transition-all hover:bg-white/5 shadow-sm">
+                                    <div class="text-2xl mb-1">✨</div>
+                                    <div class="text-[10px] md:text-xs font-medium">ไฟเย็น</div>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer relative text-center">
+                                <input type="radio" name="k-extra" value="coins" class="peer sr-only">
+                                <div class="p-2 rounded-xl border border-white/10 peer-checked:border-orange-400 peer-checked:bg-orange-400/20 transition-all hover:bg-white/5 shadow-sm">
+                                    <div class="text-2xl mb-1">🪙</div>
+                                    <div class="text-[10px] md:text-xs font-medium">เหรียญทอง</div>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer relative text-center">
+                                <input type="radio" name="k-extra" value="duck" class="peer sr-only">
+                                <div class="p-2 rounded-xl border border-white/10 peer-checked:border-orange-400 peer-checked:bg-orange-400/20 transition-all hover:bg-white/5 shadow-sm">
+                                    <div class="text-2xl mb-1">🦆</div>
+                                    <div class="text-[10px] md:text-xs font-medium">เป็ดน้อย</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Lantern Style Selector -->
+                <div id="lantern-options" class="space-y-4 hidden transition-all duration-300">
+                    <div>
+                        <label class="block text-sm text-blue-200 mb-2">เลือกสีโคมลอย (Color)</label>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3">
+                            <label class="cursor-pointer relative text-center">
+                                <input type="radio" name="l-color" value="orange" checked class="peer sr-only">
+                                <div class="p-3 rounded-xl border border-white/10 peer-checked:border-orange-400 peer-checked:bg-orange-400/20 transition-all hover:bg-white/5 shadow-sm">
+                                    <div class="w-6 h-8 bg-gradient-to-b from-orange-400 to-orange-600 rounded-t-full rounded-b-sm mx-auto mb-2 shadow-[0_0_10px_rgba(251,146,60,0.5)]"></div>
+                                    <div class="text-[10px] md:text-xs font-medium">สีส้ม</div>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer relative text-center">
+                                <input type="radio" name="l-color" value="yellow" class="peer sr-only">
+                                <div class="p-3 rounded-xl border border-white/10 peer-checked:border-yellow-400 peer-checked:bg-yellow-400/20 transition-all hover:bg-white/5 shadow-sm">
+                                    <div class="w-6 h-8 bg-gradient-to-b from-yellow-300 to-yellow-500 rounded-t-full rounded-b-sm mx-auto mb-2 shadow-[0_0_10px_rgba(250,204,21,0.5)]"></div>
+                                    <div class="text-[10px] md:text-xs font-medium">สีเหลือง</div>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer relative text-center">
+                                <input type="radio" name="l-color" value="red" class="peer sr-only">
+                                <div class="p-3 rounded-xl border border-white/10 peer-checked:border-red-400 peer-checked:bg-red-400/20 transition-all hover:bg-white/5 shadow-sm">
+                                    <div class="w-6 h-8 bg-gradient-to-b from-red-400 to-red-600 rounded-t-full rounded-b-sm mx-auto mb-2 shadow-[0_0_10px_rgba(248,113,113,0.5)]"></div>
+                                    <div class="text-[10px] md:text-xs font-medium">สีแดง</div>
+                                </div>
+                            </label>
+                            <label class="cursor-pointer relative text-center">
+                                <input type="radio" name="l-color" value="white" class="peer sr-only">
+                                <div class="p-3 rounded-xl border border-white/10 peer-checked:border-gray-200 peer-checked:bg-gray-200/20 transition-all hover:bg-white/5 shadow-sm">
+                                    <div class="w-6 h-8 bg-gradient-to-b from-gray-100 to-gray-300 rounded-t-full rounded-b-sm mx-auto mb-2 shadow-[0_0_10px_rgba(255,255,255,0.5)]"></div>
+                                    <div class="text-[10px] md:text-xs font-medium">สีขาว</div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" id="btn-submit" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold py-3 rounded-xl shadow-lg transform transition-all active:scale-95 mt-6">
+                    ปล่อย 🚀
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-6 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-full shadow-2xl z-50 flex items-center gap-2 transition-opacity duration-300 opacity-0 pointer-events-none">
+        <span id="toast-msg" class="font-medium text-white"></span>
+    </div>
+
+    <!-- Firebase and Application Logic -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global Environment Variables mapped for Immersive Apps
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'vsc-loi-krathong';
+        let firebaseConfig = {};
+        if (typeof __firebase_config !== 'undefined') {
+            try { 
+                firebaseConfig = JSON.parse(__firebase_config); 
+            } catch (e) { 
+                console.error("Error parsing firebase config", e); 
+            }
+        }
+
+        // Initialize Firebase securely
+        let app, db, auth;
+        try {
+            app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+        } catch (e) { 
+            console.error("Firebase init error", e); 
+        }
+        
+        let currentUser = null;
+        const krathongsMap = new Map();
+        let currentBase64Image = null; // ตัวแปรเก็บรูปภาพที่ถูกย่อขนาดและแปลงเป็น Base64 แล้ว
+        let currentActionType = 'krathong'; // สถานะว่ากำลังเลือกลอยกระทงหรือโคมลอย
+
+        // --- Visual Effects Setup ---
+        function generateStars() {
+            const sky = document.getElementById('sky');
+            const numStars = 80;
+            for (let i = 0; i < numStars; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                const size = Math.random() * 2 + 1;
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                star.style.left = `${Math.random() * 100}%`;
+                star.style.top = `${Math.random() * 100}%`;
+                star.style.animationDuration = `${Math.random() * 3 + 2}s`;
+                star.style.animationDelay = `${Math.random() * 5}s`;
+                sky.appendChild(star);
+            }
+        }
+
+        // --- Core Application Logic ---
+        async function initApp() {
+            generateStars();
+            setupUIHandlers();
+
+            if (!auth) {
+                showToast("ระบบออฟไลน์ (ไม่ได้เชื่อมต่อฐานข้อมูล)", true);
+                return;
+            }
+
+            try {
+                // Must Authenticate before initiating queries
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+                currentUser = auth.currentUser;
+                
+                // Once authenticated, start listening to real-time events
+                listenToKrathongs();
+            } catch (error) {
+                console.error("Authentication failed:", error);
+                showToast("ไม่สามารถเชื่อมต่อระบบได้", true);
+            }
+        }
+
+        function setupUIHandlers() {
+            const modal = document.getElementById('krathong-modal');
+            const modalContent = document.getElementById('modal-content');
+            
+            const openModal = (type) => {
+                currentActionType = type;
+                
+                // Update UI based on type
+                const title = document.getElementById('modal-title');
+                const btnSubmit = document.getElementById('btn-submit');
+                const krathongOptions = document.getElementById('krathong-options');
+                const lanternOptions = document.getElementById('lantern-options');
+
+                if (type === 'krathong') {
+                    title.innerText = 'สร้างกระทงของคุณ';
+                    title.className = 'text-2xl font-semibold text-yellow-300';
+                    btnSubmit.innerHTML = 'ปล่อยกระทง 🪷';
+                    btnSubmit.className = 'w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold py-3 rounded-xl shadow-lg transform transition-all active:scale-95 mt-6';
+                    krathongOptions.classList.remove('hidden');
+                    lanternOptions.classList.add('hidden');
+                } else {
+                    title.innerText = 'สร้างโคมลอยของคุณ';
+                    title.className = 'text-2xl font-semibold text-orange-400';
+                    btnSubmit.innerHTML = 'ปล่อยโคมลอย 🏮';
+                    btnSubmit.className = 'w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 text-white font-semibold py-3 rounded-xl shadow-lg transform transition-all active:scale-95 mt-6';
+                    krathongOptions.classList.add('hidden');
+                    lanternOptions.classList.remove('hidden');
+                }
+
+                modal.classList.remove('hidden');
+                modal.classList.remove('pointer-events-none');
+                setTimeout(() => {
+                    modal.classList.remove('opacity-0');
+                    modalContent.classList.remove('scale-95');
+                }, 10);
+            };
+
+            document.getElementById('btn-open-krathong').addEventListener('click', () => openModal('krathong'));
+            document.getElementById('btn-open-lantern').addEventListener('click', () => openModal('lantern'));
+
+            const closeModal = () => {
+                modal.classList.add('opacity-0');
+                modalContent.classList.add('scale-95');
+                modal.classList.add('pointer-events-none'); // ป้องกันการคลิกเมื่อปิดหน้าต่าง
+                setTimeout(() => modal.classList.add('hidden'), 300);
+            };
+
+            document.getElementById('btn-close-modal').addEventListener('click', closeModal);
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) closeModal();
+            });
+
+            // Image Upload & Compression Handler
+            document.getElementById('k-image').addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) {
+                    currentBase64Image = null;
+                    document.getElementById('k-image-preview').classList.add('hidden');
+                    return;
+                }
+
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const MAX_SIZE = 64;
+                        let width = img.width;
+                        let height = img.height;
+
+                        // คำนวณสัดส่วนรูปภาพให้ไม่เกิน 64x64
+                        if (width > height) {
+                            if (width > MAX_SIZE) {
+                                height *= MAX_SIZE / width;
+                                width = MAX_SIZE;
+                            }
+                        } else {
+                            if (height > MAX_SIZE) {
+                                width *= MAX_SIZE / height;
+                                height = MAX_SIZE;
+                            }
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+                        
+                        // บีบอัดเป็น WebP (ประหยัดพื้นที่กว่า) หรือ JPEG
+                        currentBase64Image = canvas.toDataURL('image/webp', 0.8);
+                        
+                        // แสดงภาพพรีวิว
+                        const preview = document.getElementById('k-image-preview');
+                        preview.src = currentBase64Image;
+                        preview.classList.remove('hidden');
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+
+            // The critical form submission handler
+            document.getElementById('krathong-form').addEventListener('submit', async (e) => {
+                e.preventDefault(); // Prevents page reload
+                await submitKrathong();
+                closeModal();
+            });
+        }
+
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = message;
+            
+            toast.className = `fixed top-6 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-full shadow-2xl z-50 flex items-center gap-2 transition-opacity duration-300 text-white ${isError ? 'bg-red-500' : 'bg-green-500'}`;
+            
+            setTimeout(() => { toast.classList.remove('opacity-0'); }, 10);
+            setTimeout(() => { toast.classList.add('opacity-0'); }, 3000);
+        }
+
+        // --- Database Logic ---
+        async function submitKrathong() {
+            const name = document.getElementById('k-name').value.trim();
+            const wish = document.getElementById('k-wish').value.trim();
+            
+            // Gather properties based on type
+            const baseStyle = document.querySelector('input[name="k-base"]:checked').value;
+            const flowerStyle = document.querySelector('input[name="k-flower"]:checked').value;
+            const extraStyle = document.querySelector('input[name="k-extra"]:checked').value;
+            const lanternColor = document.querySelector('input[name="l-color"]:checked').value;
+            
+            // Generate random positions and timings
+            const posPercent = Math.floor(Math.random() * 80) + 10; // Use for top (Krathong) or left (Lantern)
+            const duration = Math.floor(Math.random() * 40) + (currentActionType === 'krathong' ? 40 : 25); 
+            
+            const dataPayload = {
+                type: currentActionType,
+                userId: currentUser ? currentUser.uid : 'local-user',
+                name: name,
+                wish: wish,
+                image: currentBase64Image,
+                posPercent: posPercent,
+                duration: duration,
+                createdAt: Date.now()
+            };
+
+            // Add specific details
+            if (currentActionType === 'krathong') {
+                dataPayload.base = baseStyle;
+                dataPayload.flower = flowerStyle;
+                dataPayload.extra = extraStyle;
+                dataPayload.topPercent = posPercent; // Backward compatibility
+            } else {
+                dataPayload.lanternColor = lanternColor;
+                dataPayload.leftPercent = posPercent;
+            }
+
+            // Fallback for local testing without Firebase Config
+            if (!db || !currentUser) {
+                renderItem(Date.now().toString(), dataPayload);
+                document.getElementById('krathong-form').reset();
+                currentBase64Image = null; 
+                document.getElementById('k-image-preview').classList.add('hidden');
+                showToast(`ปล่อย${currentActionType === 'krathong' ? 'กระทง' : 'โคมลอย'}สำเร็จ! ${currentActionType === 'krathong' ? '🪷' : '🏮'} (โหมดออฟไลน์)`);
+                return;
+            }
+
+            const btn = document.getElementById('btn-submit');
+            btn.disabled = true;
+            btn.innerHTML = 'กำลังปล่อย...';
+
+            try {
+                // Strict path writing for artifacts
+                const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'krathongs');
+                await addDoc(colRef, dataPayload);
+                
+                document.getElementById('krathong-form').reset();
+                currentBase64Image = null;
+                document.getElementById('k-image-preview').classList.add('hidden');
+                showToast(`ปล่อย${currentActionType === 'krathong' ? 'กระทง' : 'โคมลอย'}สำเร็จ! ${currentActionType === 'krathong' ? '🪷' : '🏮'}`);
+            } catch (err) {
+                console.error("Error adding doc: ", err);
+                showToast("เกิดข้อผิดพลาด กรุณาลองใหม่", true);
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = currentActionType === 'krathong' ? 'ปล่อยกระทง 🪷' : 'ปล่อยโคมลอย 🏮';
+            }
+        }
+
+        function listenToKrathongs() {
+            if (!db) return;
+            const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'krathongs');
+            
+            onSnapshot(colRef, (snapshot) => {
+                snapshot.docChanges().forEach((change) => {
+                    if (change.type === 'added') {
+                        renderItem(change.doc.id, change.doc.data());
+                    }
+                    if (change.type === 'removed') {
+                        removeKrathong(change.doc.id);
+                    }
+                });
+            }, (error) => {
+                console.error("Listen failed: ", error);
+            });
+        }
+
+        // --- Rendering Logic ---
+        function generateKrathongVisual(base, flower, extra, userImage) {
+            let baseHtml = '';
+            
+            // Flower mapping
+            let flowerEmoji = '🌼';
+            if (flower === 'orchid') flowerEmoji = '🌺';
+            if (flower === 'rose') flowerEmoji = '🌹';
+            if (flower === 'jasmine') flowerEmoji = '🤍';
+            if (flower === 'amaranth') flowerEmoji = '🌸';
+            
+            let flowersHtml = `
+                <div class="absolute -top-3 flex justify-center w-full text-lg drop-shadow-md z-10">
+                    <span class="-mr-1">${flowerEmoji}</span>
+                    <span class="mb-2 z-10 scale-110">${flowerEmoji}</span>
+                    <span class="-ml-1">${flowerEmoji}</span>
+                </div>
+            `;
+
+            // Extras mapping
+            let extraHtml = '';
+            if (!extra || extra === 'candle') {
+                extraHtml = `
+                    <div class="absolute -top-8 flex gap-0.5 items-end justify-center w-full z-20">
+                        <div class="w-1 h-6 bg-amber-900 rounded-t-sm shadow-sm relative"><div class="absolute -top-1 left-0 w-full h-1 bg-red-500 rounded-full shadow-[0_0_3px_red]"></div></div>
+                        <div class="w-1 h-7 bg-amber-900 rounded-t-sm shadow-sm relative"><div class="absolute -top-1 left-0 w-full h-1 bg-red-500 rounded-full shadow-[0_0_3px_red]"></div></div>
+                        <div class="w-1 h-6 bg-amber-900 rounded-t-sm shadow-sm relative"><div class="absolute -top-1 left-0 w-full h-1 bg-red-500 rounded-full shadow-[0_0_3px_red]"></div></div>
+                        <div class="w-1.5 h-5 bg-yellow-200 ml-1 rounded-sm relative shadow-sm">
+                            <div class="absolute -top-3 -left-[3px] candle-flame"></div>
+                        </div>
+                    </div>
+                `;
+            } else if (extra === 'sparkler') {
+                extraHtml = `
+                    <div class="absolute -top-8 flex justify-center w-full z-20">
+                        <div class="text-2xl animate-pulse drop-shadow-[0_0_15px_#fde047] filter brightness-125">✨</div>
+                        <div class="w-1 h-6 bg-gray-400 rounded-full absolute top-5"></div>
+                    </div>
+                `;
+            } else if (extra === 'coins') {
+                extraHtml = `
+                    <div class="absolute -top-5 flex justify-center gap-1 w-full z-20 text-lg drop-shadow-[0_2px_5px_rgba(0,0,0,0.5)]">
+                        <div class="transform rotate-12">🪙</div>
+                        <div class="transform -rotate-12 mt-1">🪙</div>
+                        <div class="transform rotate-45">🪙</div>
+                    </div>
+                `;
+            } else if (extra === 'duck') {
+                extraHtml = `
+                    <div class="absolute -top-7 flex justify-center w-full z-20 text-[28px] drop-shadow-md">
+                        🦆
+                    </div>
+                `;
+            }
+
+            // Bases mapping
+            if (base === 'banana') {
+                baseHtml = `
+                    <div class="relative w-16 h-6 bg-green-700 rounded-[50%] shadow-[inset_0_-4px_rgba(0,0,0,0.4),0_2px_4px_rgba(0,0,0,0.5)] border border-green-600 flex items-center justify-center z-10">
+                        <div class="absolute top-0 w-14 h-4 bg-green-500 rounded-[50%] border border-green-600/50"></div>
+                    </div>
+                `;
+            } else if (base === 'lotus') {
+                baseHtml = `
+                    <div class="relative w-16 h-8 flex items-end justify-center z-10">
+                        <div class="text-[3rem] leading-none drop-shadow-lg -mb-2">🪷</div>
+                    </div>
+                `;
+                flowersHtml = `
+                    <div class="absolute -top-1 flex justify-center w-full text-base drop-shadow-md z-10">
+                        <span>${flowerEmoji}</span>
+                    </div>
+                `;
+            } else if (base === 'coconut') {
+                baseHtml = `
+                    <div class="relative w-14 h-7 bg-[#4a2e15] rounded-b-[30px] rounded-t-[50%] shadow-[inset_0_-5px_rgba(0,0,0,0.6),0_2px_4px_rgba(0,0,0,0.5)] border-t-[3px] border-[#7a4823] z-10">
+                    </div>
+                `;
+            } else if (base === 'bread') {
+                baseHtml = `
+                    <div class="relative w-16 h-7 bg-[#d4a373] rounded-[40%] shadow-[inset_0_-4px_rgba(0,0,0,0.2),0_2px_4px_rgba(0,0,0,0.5)] border border-[#bc6c25] flex items-center justify-center z-10">
+                        <div class="absolute top-0 w-14 h-4 bg-[#faedcd] rounded-[40%]"></div>
+                    </div>
+                `;
+            } else if (base === 'ice') {
+                baseHtml = `
+                    <div class="relative w-16 h-7 bg-cyan-200/50 backdrop-blur-md rounded-[10%] shadow-[inset_0_0_10px_rgba(255,255,255,0.8),0_2px_10px_rgba(34,211,238,0.6)] border border-white/80 z-10">
+                    </div>
+                `;
+            } else if (base === 'paper') {
+                baseHtml = `
+                    <div class="relative w-16 h-7 bg-[#e0e0e0] rounded-b-[20px] rounded-t-[50%] shadow-[inset_0_-5px_rgba(0,0,0,0.2),0_2px_4px_rgba(0,0,0,0.5)] border border-[#9e9e9e] flex items-center justify-center z-10">
+                        <div class="absolute top-0 w-14 h-3 bg-[#f5f5f5] rounded-[50%] border border-[#bdbdbd]"></div>
+                    </div>
+                `;
+            }
+            
+            let userImageHtml = '';
+            if (userImage) {
+                userImageHtml = `
+                    <div class="absolute -top-11 -right-2 z-30 w-8 h-8 rounded-full border-[1.5px] border-white/80 shadow-[0_0_8px_rgba(255,255,255,0.4)] overflow-hidden bg-white/20 transform rotate-[10deg]">
+                        <img src="${userImage}" class="w-full h-full object-cover" alt="User">
+                    </div>
+                `;
+            }
+            
+            return `
+                <div class="relative flex flex-col items-center mt-6">
+                    ${userImageHtml}
+                    ${extraHtml}
+                    ${flowersHtml}
+                    ${baseHtml}
+                    <div class="absolute -bottom-2 w-16 h-4 bg-blue-400/20 rounded-[50%] blur-sm z-0"></div>
+                </div>
+            `;
+        }
+
+        function generateLanternVisual(color, userImage) {
+            let colorClasses = '';
+            let shadowColor = '';
+            if (color === 'orange') { colorClasses = 'bg-gradient-to-b from-orange-400 to-orange-600'; shadowColor = 'rgba(251,146,60,0.8)'; }
+            else if (color === 'yellow') { colorClasses = 'bg-gradient-to-b from-yellow-300 to-yellow-500'; shadowColor = 'rgba(250,204,21,0.8)'; }
+            else if (color === 'red') { colorClasses = 'bg-gradient-to-b from-red-400 to-red-600'; shadowColor = 'rgba(248,113,113,0.8)'; }
+            else if (color === 'white') { colorClasses = 'bg-gradient-to-b from-gray-100 to-gray-300'; shadowColor = 'rgba(255,255,255,0.8)'; }
+            else { colorClasses = 'bg-gradient-to-b from-orange-400 to-orange-600'; shadowColor = 'rgba(251,146,60,0.8)'; }
+
+            let userImageHtml = '';
+            if (userImage) {
+                userImageHtml = `
+                    <div class="absolute -right-4 top-1/4 z-30 w-8 h-8 rounded-full border-[1.5px] border-white/80 shadow-[0_0_8px_rgba(255,255,255,0.4)] overflow-hidden bg-white/20 transform rotate-[10deg]">
+                        <img src="${userImage}" class="w-full h-full object-cover" alt="User">
+                    </div>
+                `;
+            }
+
+            return `
+                <div class="relative flex flex-col items-center mt-8">
+                    ${userImageHtml}
+                    <div class="relative w-14 h-20 ${colorClasses} rounded-t-[50%] rounded-b-[20%] shadow-[inset_0_-10px_20px_rgba(0,0,0,0.5),0_0_30px_${shadowColor}] flex justify-center items-end pb-1.5 z-10">
+                        <!-- Lantern Base Ring -->
+                        <div class="w-10 h-1.5 bg-amber-900 rounded-sm z-20"></div>
+                        <!-- Flame Glow -->
+                        <div class="absolute bottom-2 w-6 h-6 bg-yellow-100 rounded-full blur-md opacity-80 animate-pulse z-10"></div>
+                        <div class="absolute bottom-3 w-3 h-3 bg-white rounded-full blur-sm z-10"></div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderItem(id, data) {
+            if (krathongsMap.has(id)) return; // Prevent dupes
+
+            const isLantern = data.type === 'lantern';
+            const container = document.getElementById(isLantern ? 'sky' : 'krathong-container');
+            
+            const wrapper = document.createElement('div');
+            wrapper.id = `krathong-${id}`;
+
+            const ageInSeconds = (Date.now() - (data.createdAt || Date.now())) / 1000;
+            const currentCycleOffset = ageInSeconds % data.duration;
+            const animationDelay = -currentCycleOffset;
+
+            if (isLantern) {
+                // --- Lantern Rendering ---
+                wrapper.className = 'lantern-wrapper';
+                const scale = 0.5 + (Math.random() * 0.5); // Random scale for depth
+                
+                wrapper.style.left = `${data.leftPercent || data.posPercent}%`;
+                wrapper.style.zIndex = Math.floor(Math.random() * 20); // Random depth in sky
+                wrapper.style.transform = `scale(${scale})`;
+                
+                // We use float-up for vertical, and an inner sway for horizontal
+                wrapper.style.animation = `float-up ${data.duration}s linear infinite`;
+                wrapper.style.animationDelay = `${animationDelay}s`;
+
+                wrapper.innerHTML = `
+                    <div class="lantern-body relative">
+                        <div class="absolute bottom-full mb-2 flex flex-col items-center pointer-events-none w-max max-w-[160px] z-30 transition-transform hover:scale-110">
+                            <div class="glass-panel px-3 py-2 rounded-xl shadow-[0_0_15px_rgba(255,255,255,0.1)] border border-white/20 text-center backdrop-blur-md">
+                                <p class="font-bold text-orange-200 text-sm truncate max-w-full w-full tracking-wide">${escapeHtml(data.name)}</p>
+                                ${data.wish ? `<p class="text-[11px] text-white/90 line-clamp-2 mt-0.5 leading-tight">${escapeHtml(data.wish)}</p>` : ''}
+                            </div>
+                            <div class="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[8px] border-t-white/30 -mt-[1px]"></div>
+                        </div>
+                        ${generateLanternVisual(data.lanternColor, data.image)}
+                    </div>
+                `;
+            } else {
+                // --- Krathong Rendering ---
+                wrapper.className = 'krathong-wrapper';
+                const scale = 0.5 + ((data.topPercent || data.posPercent) / 100) * 0.7; 
+                const zIndex = Math.floor(data.topPercent || data.posPercent); 
+                
+                wrapper.style.top = `${data.topPercent || data.posPercent}%`;
+                wrapper.style.zIndex = zIndex;
+                wrapper.style.transform = `scale(${scale})`;
+                wrapper.style.animation = `drift ${data.duration}s linear infinite`;
+                wrapper.style.animationDelay = `${animationDelay}s`;
+
+                wrapper.innerHTML = `
+                    <div class="krathong-bob relative">
+                        <div class="absolute bottom-full mb-3 flex flex-col items-center pointer-events-none w-max max-w-[160px] z-30 transition-transform hover:scale-110">
+                            <div class="glass-panel px-3 py-2 rounded-xl shadow-[0_0_15px_rgba(255,255,255,0.1)] border border-white/20 text-center backdrop-blur-md">
+                                <p class="font-bold text-yellow-300 text-sm truncate max-w-full w-full tracking-wide">${escapeHtml(data.name)}</p>
+                                ${data.wish ? `<p class="text-[11px] text-white/90 line-clamp-2 mt-0.5 leading-tight">${escapeHtml(data.wish)}</p>` : ''}
+                            </div>
+                            <div class="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[8px] border-t-white/30 -mt-[1px]"></div>
+                        </div>
+                        ${generateKrathongVisual(data.base || 'banana', data.flower || 'marigold', data.extra || 'candle', data.image)}
+                    </div>
+                `;
+            }
+
+            container.appendChild(wrapper);
+            krathongsMap.set(id, wrapper);
+        }
+
+        function removeKrathong(id) {
+            const element = document.getElementById(`krathong-${id}`);
+            if (element) element.remove();
+            krathongsMap.delete(id);
+        }
+
+        function escapeHtml(unsafe) {
+            if (!unsafe) return "";
+            return unsafe
+                 .replace(/&/g, "&amp;")
+                 .replace(/</g, "&lt;")
+                 .replace(/>/g, "&gt;")
+                 .replace(/"/g, "&quot;")
+                 .replace(/'/g, "&#039;");
+        }
+
+        // Bootstrap App
+        window.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
