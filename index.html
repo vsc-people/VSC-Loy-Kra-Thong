@@ -171,12 +171,12 @@
                                 <div class="p-2 rounded-xl border border-white/10 peer-checked:border-yellow-400 peer-checked:bg-yellow-400/20 transition-all"><div class="text-2xl mb-1">🌿</div><div class="text-[10px]">ใบตอง</div></div>
                             </label>
                             <label class="cursor-pointer relative text-center">
-                                <input type="radio" name="opt-base" value="lotus" class="peer sr-only">
-                                <div class="p-2 rounded-xl border border-white/10 peer-checked:border-yellow-400 peer-checked:bg-yellow-400/20 transition-all"><div class="text-2xl mb-1">🪷</div><div class="text-[10px]">ดอกบัว</div></div>
-                            </label>
-                            <label class="cursor-pointer relative text-center">
                                 <input type="radio" name="opt-base" value="bread" class="peer sr-only">
                                 <div class="p-2 rounded-xl border border-white/10 peer-checked:border-yellow-400 peer-checked:bg-yellow-400/20 transition-all"><div class="text-2xl mb-1">🍞</div><div class="text-[10px]">ขนมปัง</div></div>
+                            </label>
+                            <label class="cursor-pointer relative text-center">
+                                <input type="radio" name="opt-base" value="ice" class="peer sr-only">
+                                <div class="p-2 rounded-xl border border-white/10 peer-checked:border-blue-400 peer-checked:bg-blue-400/20 transition-all"><div class="text-2xl mb-1">🧊</div><div class="text-[10px]">น้ำแข็ง</div></div>
                             </label>
                         </div>
                     </div>
@@ -189,19 +189,19 @@
                                 <div class="p-2 rounded-xl border border-white/10 peer-checked:border-pink-400 peer-checked:bg-pink-400/20 transition-all"><div class="text-2xl mb-1">🌼</div><div class="text-[10px]">ดาวเรือง</div></div>
                             </label>
                             <label class="cursor-pointer relative text-center">
-                                <input type="radio" name="opt-flower" value="orchid" class="peer sr-only">
-                                <div class="p-2 rounded-xl border border-white/10 peer-checked:border-pink-400 peer-checked:bg-pink-400/20 transition-all"><div class="text-2xl mb-1">🌺</div><div class="text-[10px]">กล้วยไม้</div></div>
+                                <input type="radio" name="opt-flower" value="lotus" class="peer sr-only">
+                                <div class="p-2 rounded-xl border border-white/10 peer-checked:border-pink-400 peer-checked:bg-pink-400/20 transition-all"><div class="text-2xl mb-1">🪷</div><div class="text-[10px]">ดอกบัว</div></div>
                             </label>
                             <label class="cursor-pointer relative text-center">
-                                <input type="radio" name="opt-flower" value="jasmine" class="peer sr-only">
-                                <div class="p-2 rounded-xl border border-white/10 peer-checked:border-pink-400 peer-checked:bg-pink-400/20 transition-all"><div class="text-2xl mb-1">🤍</div><div class="text-[10px]">มะลิ</div></div>
+                                <input type="radio" name="opt-flower" value="rose" class="peer sr-only">
+                                <div class="p-2 rounded-xl border border-white/10 peer-checked:border-red-400 peer-checked:bg-red-400/20 transition-all"><div class="text-2xl mb-1">🌹</div><div class="text-[10px]">กุหลาบ</div></div>
                             </label>
                         </div>
                     </div>
                     <!-- Extras -->
                     <div>
                         <label class="block text-sm text-blue-200 mb-2">ของประดับ (Extras)</label>
-                        <div class="grid grid-cols-4 gap-2">
+                        <div class="grid grid-cols-3 gap-2">
                             <label class="cursor-pointer relative text-center">
                                 <input type="radio" name="opt-extra" value="candle" checked class="peer sr-only">
                                 <div class="p-2 rounded-xl border border-white/10 peer-checked:border-orange-400 peer-checked:bg-orange-400/20 transition-all"><div class="text-xl mb-1">🕯️</div></div>
@@ -211,12 +211,8 @@
                                 <div class="p-2 rounded-xl border border-white/10 peer-checked:border-orange-400 peer-checked:bg-orange-400/20 transition-all"><div class="text-xl mb-1">✨</div></div>
                             </label>
                             <label class="cursor-pointer relative text-center">
-                                <input type="radio" name="opt-extra" value="coins" class="peer sr-only">
-                                <div class="p-2 rounded-xl border border-white/10 peer-checked:border-orange-400 peer-checked:bg-orange-400/20 transition-all"><div class="text-xl mb-1">🪙</div></div>
-                            </label>
-                            <label class="cursor-pointer relative text-center">
-                                <input type="radio" name="opt-extra" value="duck" class="peer sr-only">
-                                <div class="p-2 rounded-xl border border-white/10 peer-checked:border-orange-400 peer-checked:bg-orange-400/20 transition-all"><div class="text-xl mb-1">🦆</div></div>
+                                <input type="radio" name="opt-extra" value="incense" class="peer sr-only">
+                                <div class="p-2 rounded-xl border border-white/10 peer-checked:border-orange-400 peer-checked:bg-orange-400/20 transition-all"><div class="text-xl mb-1">🥢</div></div>
                             </label>
                         </div>
                     </div>
@@ -266,21 +262,19 @@
         const ANIMATION_DURATION_MS = 20000; // 20 seconds loop as requested
         
         let app, db, auth, currentUser = null;
-        let isOnline = false;
 
         // Firebase Initialization safely
-        let firebaseConfig = null;
+        let firebaseConfig = {};
         if (typeof __firebase_config !== 'undefined' && __firebase_config) {
             try { firebaseConfig = typeof __firebase_config === 'string' ? JSON.parse(__firebase_config) : __firebase_config; } catch(e){}
         }
 
-        if (firebaseConfig && Object.keys(firebaseConfig).length > 0) {
-            try {
-                app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-                isOnline = true;
-            } catch (e) { console.error("Firebase init error", e); }
+        try {
+            app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+        } catch (e) { 
+            console.error("Firebase init error", e); 
         }
         
         // State
@@ -296,11 +290,6 @@
             // Start the pure JS mathematical render loop immediately
             requestAnimationFrame(animationLoop);
 
-            if (!isOnline || !auth || !db) {
-                showToast("โหมดใช้งานออฟไลน์ (ทดสอบ)", true);
-                return;
-            }
-
             try {
                 showToast("กำลังเชื่อมต่อเซิร์ฟเวอร์ VSC Global...", false);
                 
@@ -315,7 +304,7 @@
                 listenToCompanyRoom();
             } catch (error) {
                 console.error("Auth failed:", error);
-                showToast("การเชื่อมต่อล้มเหลว", true);
+                showToast("เชื่อมต่อล้มเหลว กรุณารีเฟรชหน้าเว็บ", true);
             }
         });
 
@@ -434,10 +423,8 @@
                 payload.lanternColor = colorEl ? colorEl.value : 'orange';
             }
 
-            if (!isOnline || !db || !currentUser) {
-                renderItemToDOM(Date.now().toString(), payload);
-                resetForm();
-                showToast(`ปล่อยสำเร็จ (ออฟไลน์)`);
+            if (!db || !currentUser) {
+                showToast(`ไม่สามารถส่งข้อมูลได้: ยังไม่เชื่อมต่อเซิร์ฟเวอร์`, true);
                 return;
             }
 
@@ -572,29 +559,31 @@
         // --- HTML Generators (with Fallbacks) ---
         function getKrathongHTML(d) {
             let fEmoji = '🌼';
-            if (d.flower === 'orchid') fEmoji = '🌺';
-            if (d.flower === 'jasmine') fEmoji = '🤍';
+            if (d.flower === 'lotus') fEmoji = '🪷';
+            if (d.flower === 'rose') fEmoji = '🌹';
             
             const flowers = `<div class="absolute -top-3 flex justify-center w-full text-lg drop-shadow-md z-10"><span class="-mr-1">${fEmoji}</span><span class="mb-2 z-10 scale-110">${fEmoji}</span><span class="-ml-1">${fEmoji}</span></div>`;
 
             let exHtml = '';
             if (d.extra === 'candle' || !d.extra) {
-                exHtml = `<div class="absolute -top-8 flex gap-0.5 items-end justify-center w-full z-20"><div class="w-1 h-6 bg-amber-900 rounded-t-sm shadow-sm relative"></div><div class="w-1 h-7 bg-amber-900 rounded-t-sm shadow-sm relative"></div><div class="w-1 h-6 bg-amber-900 rounded-t-sm shadow-sm relative"></div><div class="w-1.5 h-5 bg-yellow-200 ml-1 rounded-sm relative"><div class="absolute -top-3 -left-[3px] candle-flame"></div></div></div>`;
+                exHtml = `<div class="absolute -top-8 flex gap-0.5 items-end justify-center w-full z-20"><div class="w-1.5 h-6 bg-amber-900 rounded-sm shadow-sm relative"></div><div class="w-2 h-5 bg-yellow-200 ml-1 rounded-sm relative"><div class="absolute -top-3 -left-[2px] candle-flame"></div></div></div>`;
             } else if (d.extra === 'sparkler') {
                 exHtml = `<div class="absolute -top-8 flex justify-center w-full z-20"><div class="text-2xl animate-pulse drop-shadow-[0_0_15px_#fde047]">✨</div></div>`;
-            } else if (d.extra === 'coins') {
-                exHtml = `<div class="absolute -top-5 flex justify-center gap-1 w-full z-20 text-lg"><div class="transform rotate-12">🪙</div><div class="transform -rotate-12 mt-1">🪙</div></div>`;
-            } else if (d.extra === 'duck') {
-                exHtml = `<div class="absolute -top-7 flex justify-center w-full z-20 text-2xl">🦆</div>`;
+            } else if (d.extra === 'incense') {
+                exHtml = `<div class="absolute -top-8 flex gap-0.5 items-end justify-center w-full z-20">
+                    <div class="w-1 h-8 bg-amber-900 rounded-t-sm shadow-sm relative"><div class="absolute -top-1 -left-[1px] w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse shadow-[0_0_5px_red]"></div></div>
+                    <div class="w-1 h-7 bg-amber-900 rounded-t-sm shadow-sm relative"><div class="absolute -top-1 -left-[1px] w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse shadow-[0_0_5px_red]"></div></div>
+                    <div class="w-1 h-8 bg-amber-900 rounded-t-sm shadow-sm relative"><div class="absolute -top-1 -left-[1px] w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse shadow-[0_0_5px_red]"></div></div>
+                </div>`;
             }
 
             let bsHtml = `<div class="relative w-16 h-6 bg-green-700 rounded-[50%] shadow-lg border border-green-600 flex items-center justify-center z-10"><div class="absolute top-0 w-14 h-4 bg-green-500 rounded-[50%]"></div></div>`;
-            if (d.base === 'lotus') bsHtml = `<div class="relative w-16 h-8 flex items-end justify-center z-10"><div class="text-[3rem] leading-none drop-shadow-lg -mb-2">🪷</div></div>`;
+            if (d.base === 'ice') bsHtml = `<div class="relative w-16 h-6 bg-blue-200/50 backdrop-blur-md rounded-[50%] shadow-[0_0_15px_rgba(255,255,255,0.5)] border border-white/50 flex items-center justify-center z-10"><div class="absolute top-0 w-14 h-4 bg-white/40 rounded-[50%]"></div></div>`;
             if (d.base === 'bread') bsHtml = `<div class="relative w-16 h-7 bg-[#d4a373] rounded-[40%] shadow-lg border border-[#bc6c25] flex items-center justify-center z-10"><div class="absolute top-0 w-14 h-4 bg-[#faedcd] rounded-[40%]"></div></div>`;
             
             const uImg = d.image ? `<div class="absolute -top-11 -right-2 z-30 w-8 h-8 rounded-full border-2 border-white/80 shadow-lg overflow-hidden bg-white/20 transform rotate-6"><img src="${d.image}" class="w-full h-full object-cover" onerror="this.style.display='none'"></div>` : '';
             
-            return `<div class="relative flex flex-col items-center mt-6">${uImg}${exHtml}${d.base === 'lotus' ? `<div class="absolute -top-1 z-10"><span>${fEmoji}</span></div>` : flowers}${bsHtml}<div class="absolute -bottom-2 w-16 h-4 bg-blue-400/20 rounded-[50%] blur-sm z-0"></div></div>`;
+            return `<div class="relative flex flex-col items-center mt-6">${uImg}${exHtml}${flowers}${bsHtml}<div class="absolute -bottom-2 w-16 h-4 bg-blue-400/20 rounded-[50%] blur-sm z-0"></div></div>`;
         }
 
         function getLanternHTML(d) {
