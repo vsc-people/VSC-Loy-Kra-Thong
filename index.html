@@ -61,11 +61,6 @@
         }
 
         /* Krathong Animations */
-        @keyframes drift {
-            0% { left: -300px; }
-            100% { left: calc(100vw + 100px); }
-        }
-        
         @keyframes bob {
             0%, 100% { transform: translateY(0px) rotate(-3deg); }
             50% { transform: translateY(-8px) rotate(3deg); }
@@ -77,12 +72,6 @@
         }
 
         /* Lantern Animations */
-        @keyframes float-up {
-            0% { bottom: -100px; opacity: 1; }
-            80% { opacity: 1; }
-            100% { bottom: 120vh; opacity: 0; }
-        }
-
         @keyframes sway {
             0%, 100% { transform: translateX(0px) rotate(-4deg); }
             50% { transform: translateX(25px) rotate(4deg); }
@@ -412,6 +401,7 @@
         
         let currentUser = null;
         const krathongsMap = new Map();
+        const activeItems = new Map(); // เพิ่ม Map สำหรับจัดการตำแหน่งด้วย JS แบบ Real-time
         let currentBase64Image = null; // ตัวแปรเก็บรูปภาพที่ถูกย่อขนาดและแปลงเป็น Base64 แล้ว
         let currentActionType = 'krathong'; // สถานะว่ากำลังเลือกลอยกระทงหรือโคมลอย
 
@@ -437,6 +427,9 @@
         async function initApp() {
             generateStars();
             setupUIHandlers();
+            
+            // เริ่มลูปคำนวณอนิเมชันแบบไร้ขีดจำกัด
+            requestAnimationFrame(animationLoop);
 
             if (!auth) {
                 showToast("ระบบออฟไลน์ (ไม่ได้เชื่อมต่อฐานข้อมูล)", true);
@@ -824,10 +817,6 @@
             const wrapper = document.createElement('div');
             wrapper.id = `krathong-${id}`;
 
-            const ageInSeconds = (Date.now() - (data.createdAt || Date.now())) / 1000;
-            const currentCycleOffset = ageInSeconds % data.duration;
-            const animationDelay = -currentCycleOffset;
-
             if (isLantern) {
                 // --- Lantern Rendering ---
                 wrapper.className = 'lantern-wrapper';
@@ -836,10 +825,6 @@
                 wrapper.style.left = `${data.leftPercent || data.posPercent}%`;
                 wrapper.style.zIndex = Math.floor(Math.random() * 20); // Random depth in sky
                 wrapper.style.transform = `scale(${scale})`;
-                
-                // We use float-up for vertical, and an inner sway for horizontal
-                wrapper.style.animation = `float-up ${data.duration}s linear infinite`;
-                wrapper.style.animationDelay = `${animationDelay}s`;
 
                 wrapper.innerHTML = `
                     <div class="lantern-body relative">
@@ -862,8 +847,6 @@
                 wrapper.style.top = `${data.topPercent || data.posPercent}%`;
                 wrapper.style.zIndex = zIndex;
                 wrapper.style.transform = `scale(${scale})`;
-                wrapper.style.animation = `drift ${data.duration}s linear infinite`;
-                wrapper.style.animationDelay = `${animationDelay}s`;
 
                 wrapper.innerHTML = `
                     <div class="krathong-bob relative">
@@ -881,12 +864,47 @@
 
             container.appendChild(wrapper);
             krathongsMap.set(id, wrapper);
+            activeItems.set(id, { element: wrapper, data: data });
         }
 
         function removeKrathong(id) {
             const element = document.getElementById(`krathong-${id}`);
             if (element) element.remove();
             krathongsMap.delete(id);
+            activeItems.delete(id);
+        }
+
+        // --- Core Animation Loop (Endless Synchronized Animation) ---
+        function animationLoop() {
+            const now = Date.now();
+            const wWidth = window.innerWidth;
+            const wHeight = window.innerHeight;
+
+            activeItems.forEach((item) => {
+                // คำนวณอายุของไอเทมว่าสร้างมานานแค่ไหนแล้ว
+                const ageMs = now - (item.data.createdAt || now);
+                const durationMs = (item.data.duration || 30) * 1000;
+                
+                // หาค่าสถานะเปอร์เซ็นต์แบบวนลูป 0.0 ถึง 1.0 (รับประกันว่าไม่มีวันหายไป)
+                let progress = (ageMs / durationMs) % 1;
+                if (progress < 0) progress += 1; 
+
+                if (item.data.type === 'lantern') {
+                    // โคมลอย: ลอยขึ้นจากด้านล่างจอ ไปจนทะลุขอบบน
+                    const startY = -150; 
+                    const endY = wHeight + 200;
+                    const currentBottom = startY + (progress * (endY - startY));
+                    item.element.style.bottom = `${currentBottom}px`;
+                } else {
+                    // กระทง: ลอยไปทางขวา จากซ้ายสุด ไปยัง ขวาสุด
+                    const startX = -250;
+                    const endX = wWidth + 200;
+                    const currentLeft = startX + (progress * (endX - startX));
+                    item.element.style.left = `${currentLeft}px`;
+                }
+            });
+
+            requestAnimationFrame(animationLoop);
         }
 
         function escapeHtml(unsafe) {
