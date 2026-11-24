@@ -72,14 +72,14 @@
         /* Base Wrappers (Positions controlled by JS Math) */
         .lantern-wrapper {
             position: absolute;
-            will-change: bottom, left; /* Hardware acceleration */
+            will-change: top, left; /* Hardware acceleration */
         }
         .krathong-wrapper {
             position: absolute;
-            will-change: left; /* Hardware acceleration */
+            will-change: left, top; /* Hardware acceleration */
         }
 
-        .krathong-bob { animation: bob 3.5s ease-in-out infinite; display: flex; flex-direction: column; align-items: center; }
+        .krathong-bob { display: flex; flex-direction: column; align-items: center; }
         
         .candle-flame {
             width: 8px;
@@ -224,8 +224,8 @@
                         <label class="block text-sm text-blue-200 mb-2">เลือกสีโคมลอย</label>
                         <div class="grid grid-cols-3 gap-2">
                             <label class="cursor-pointer relative text-center">
-                                <input type="radio" name="opt-color" value="orange" checked class="peer sr-only">
-                                <div class="p-3 rounded-xl border border-white/10 peer-checked:border-orange-400 peer-checked:bg-orange-400/20 transition-all"><div class="w-6 h-8 bg-gradient-to-b from-orange-400 to-orange-600 rounded-t-full rounded-b-sm mx-auto shadow-md"></div></div>
+                                <input type="radio" name="opt-color" value="red" checked class="peer sr-only">
+                                <div class="p-3 rounded-xl border border-white/10 peer-checked:border-red-400 peer-checked:bg-red-400/20 transition-all"><div class="w-6 h-8 bg-gradient-to-b from-red-500 to-red-700 rounded-t-full rounded-b-sm mx-auto shadow-md"></div></div>
                             </label>
                             <label class="cursor-pointer relative text-center">
                                 <input type="radio" name="opt-color" value="yellow" class="peer sr-only">
@@ -258,8 +258,7 @@
 
         // Configuration
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'vsc-loi-krathong';
-        const ROOM_COLLECTION = 'vsc_company_global_2026'; // STRICT REQUIREMENT
-        const ANIMATION_DURATION_MS = 20000; // 20 seconds loop as requested
+        const ROOM_COLLECTION = 'vsc_krathong_global_2026'; // STRICT REQUIREMENT AS REQUESTED
         
         let app, db, auth, currentUser = null;
 
@@ -404,7 +403,9 @@
 
         // --- Data Submission ---
         async function submitItem() {
-            // Robust fallback data mapping
+            // Offset time by 10% so the item spawns beautifully inside the screen immediately, not off-screen!
+            const timeOffset = currentActionType === 'lantern' ? 2500 : 2000; 
+
             const payload = {
                 type: currentActionType || 'krathong',
                 userId: currentUser ? currentUser.uid : 'local',
@@ -412,8 +413,8 @@
                 wish: document.getElementById('input-wish').value.trim() || '',
                 image: currentBase64Image || '',
                 depthPercent: Math.floor(Math.random() * 80) + 10,
-                // CRITICAL: Using client-side Date.now() instead of serverTimestamp to prevent null errors on local write
-                createdAt: Date.now() 
+                // CRITICAL: Strictly using Date.now() on client minus offset to guarantee immediate visibility
+                createdAt: Date.now() - timeOffset 
             };
 
             if (currentActionType === 'krathong') {
@@ -425,7 +426,7 @@
                 payload.extra = extraEl ? extraEl.value : 'candle';
             } else {
                 const colorEl = document.querySelector('input[name="opt-color"]:checked');
-                payload.lanternColor = colorEl ? colorEl.value : 'orange';
+                payload.lanternColor = colorEl ? colorEl.value : 'red';
             }
 
             if (!db || !currentUser) {
@@ -483,7 +484,8 @@
             // Visual scale and depth
             const depth = data.depthPercent || 50;
             const scale = 0.5 + (depth / 100) * 0.7; 
-            wrapper.style.zIndex = Math.floor(depth);
+            // Super high z-index to guarantee visibility
+            wrapper.style.zIndex = Math.floor(depth) + 100;
             wrapper.style.transform = `scale(${scale})`;
 
             // Tooltip Component
@@ -501,7 +503,6 @@
                 wrapper.innerHTML = `<div class="relative flex flex-col items-center">${tooltipHTML}${getLanternHTML(data)}</div>`;
             } else {
                 wrapper.innerHTML = `<div class="krathong-bob relative">${tooltipHTML}${getKrathongHTML(data)}</div>`;
-                wrapper.style.top = `${depth}%`; // Krathong Y-axis is fixed based on depth
             }
 
             container.appendChild(wrapper);
@@ -520,30 +521,35 @@
 
             activeItemsMap.forEach((item) => {
                 try {
-                    // Fallback to now if createdAt is corrupt, ensuring math never yields NaN
-                    const createdAt = item.data.createdAt || now; 
-                    const ageMs = now - createdAt;
+                    const isLantern = item.data.type === 'lantern';
+                    const duration = isLantern ? 25000 : 20000;
                     
-                    // Core Requested Math: (age / 20000) % 1
-                    let progress = (ageMs / ANIMATION_DURATION_MS) % 1;
-                    if (progress < 0) progress += 1; // Safegaurd for possible clock drift
+                    const createdAt = item.data.createdAt || now; 
+                    let ageMs = now - createdAt;
+                    if (ageMs < 0) ageMs = 0; // Prevent negative math issues
+                    
+                    // Core Requested Math
+                    let progress = (ageMs % duration) / duration;
 
-                    if (item.data.type === 'lantern') {
-                        // Lantern: Bottom-to-Top (from -20vh to 120vh relative to parent)
-                        // Note: inverted logic for CSS bottom property: 
-                        // Start at -20% (bottom of screen), go to 120% (top of screen)
-                        const currentBottom = -20 + (progress * 140);
-                        item.element.style.bottom = `${currentBottom}vh`;
+                    if (isLantern) {
+                        // Lantern: Bottom to Top (Map Y from 100% to -20%)
+                        const currentTop = 100 - (progress * 120);
+                        item.element.style.top = `${currentTop}%`;
                         
-                        // Sway Sine Wave logic as requested
+                        // Sway X-axis
                         const baseLeft = item.data.depthPercent || 50; 
-                        const sway = Math.sin(ageMs / 500) * 4; 
-                        item.element.style.left = `${baseLeft + sway}%`;
+                        const sway = Math.sin(ageMs / 1000) * 4; 
+                        item.element.style.left = `calc(${baseLeft}% + ${sway}px)`;
 
                     } else {
-                        // Krathong: Right-to-Left (from 120vw to -20vw)
-                        const currentLeft = 120 - (progress * 140);
-                        item.element.style.left = `${currentLeft}vw`;
+                        // Krathong: Right to Left (Map X from 100% to -20%)
+                        const currentLeft = 100 - (progress * 120);
+                        item.element.style.left = `${currentLeft}%`;
+
+                        // Bob Y-axis
+                        const baseTop = item.data.depthPercent || 50;
+                        const bob = Math.sin(ageMs / 600) * 3;
+                        item.element.style.top = `calc(${baseTop}% + ${bob}px)`;
                     }
                 } catch(e) {
                     console.error("Animation rendering error for item", item, e);
@@ -584,7 +590,7 @@
         }
 
         function getLanternHTML(d) {
-            let colorCls = 'bg-gradient-to-b from-orange-400 to-orange-600', shadow = 'rgba(251,146,60,0.8)';
+            let colorCls = 'bg-gradient-to-b from-red-500 to-red-700', shadow = 'rgba(239,68,68,0.8)';
             if (d.lanternColor === 'yellow') { colorCls = 'bg-gradient-to-b from-yellow-300 to-yellow-500'; shadow = 'rgba(250,204,21,0.8)'; }
             else if (d.lanternColor === 'white') { colorCls = 'bg-gradient-to-b from-gray-100 to-gray-300'; shadow = 'rgba(255,255,255,0.8)'; }
 
