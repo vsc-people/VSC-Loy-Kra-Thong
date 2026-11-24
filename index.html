@@ -16,6 +16,7 @@
             font-family: 'Prompt', sans-serif;
             overflow: hidden;
             background-color: #020617; /* Slate 950 fallback */
+            touch-action: none; /* Prevent scroll on touch devices */
         }
 
         /* Environments */
@@ -60,10 +61,15 @@
             animation: twinkle infinite alternate ease-in-out;
         }
 
-        /* Krathong Animations */
+        /* Krathong & Lantern Animations */
         @keyframes bob {
             0%, 100% { transform: translateY(0px) rotate(-3deg); }
             50% { transform: translateY(-8px) rotate(3deg); }
+        }
+        
+        @keyframes sway {
+            0%, 100% { transform: translateX(0px) rotate(-4deg); }
+            50% { transform: translateX(25px) rotate(4deg); }
         }
         
         @keyframes pulse-glow {
@@ -71,19 +77,13 @@
             50% { opacity: 0.9; transform: scale(1.2); }
         }
 
-        /* Lantern Animations */
-        @keyframes sway {
-            0%, 100% { transform: translateX(0px) rotate(-4deg); }
-            50% { transform: translateX(25px) rotate(4deg); }
-        }
-
         .lantern-wrapper {
             position: absolute;
-            will-change: bottom, transform;
+            will-change: bottom, left, transform;
         }
 
         .lantern-body {
-            animation: sway 4s ease-in-out infinite;
+            animation: sway 5s ease-in-out infinite;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -91,8 +91,7 @@
 
         .krathong-wrapper {
             position: absolute;
-            /* Will be animated via inline styles for synchronized delay/duration */
-            will-change: left; 
+            will-change: left, transform; 
         }
 
         .krathong-bob {
@@ -111,7 +110,7 @@
             animation: pulse-glow 1.5s infinite alternate ease-in-out;
         }
 
-        /* Glassmorphism for UI */
+        /* UI Elements */
         .glass-panel {
             background: rgba(15, 23, 42, 0.6);
             backdrop-filter: blur(12px);
@@ -119,7 +118,6 @@
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
         
-        /* Custom Scrollbar for Wish text if needed */
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
@@ -129,14 +127,12 @@
 
     <!-- Sky Section -->
     <div id="sky" class="sky-gradient h-[55%] relative w-full z-0 overflow-hidden">
-        <!-- Stars will be injected here -->
+        <!-- Stars injected via JS -->
         
-        <!-- Moon -->
         <div class="absolute top-10 right-10 md:top-16 md:right-24">
             <div class="moon"></div>
         </div>
 
-        <!-- Header -->
         <div class="absolute top-0 left-0 w-full pt-8 pb-4 text-center z-20 pointer-events-none">
             <h1 class="text-4xl md:text-5xl font-bold tracking-wider drop-shadow-[0_0_15px_rgba(255,255,255,0.8)] text-transparent bg-clip-text bg-gradient-to-b from-yellow-100 to-yellow-400">
                 VSC ลอยกระทงออนไลน์
@@ -146,11 +142,8 @@
     </div>
 
     <!-- River Section -->
-    <div id="river" class="river-gradient h-[45%] relative w-full z-10">
-        <!-- Moon reflection -->
+    <div id="river" class="river-gradient h-[45%] relative w-full z-10 overflow-hidden">
         <div class="absolute top-0 right-10 md:right-24 moon-reflection"></div>
-        
-        <!-- Krathongs container -->
         <div id="krathong-container" class="absolute inset-0 w-full h-full pointer-events-none"></div>
     </div>
 
@@ -166,7 +159,7 @@
         </button>
     </div>
 
-    <!-- Form Modal -->
+    <!-- Unified Form Modal -->
     <div id="krathong-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300 hidden">
         <div class="glass-panel w-[90%] max-w-md max-h-[90vh] overflow-y-auto rounded-2xl p-6 md:p-8 transform scale-95 transition-transform duration-300" id="modal-content">
             
@@ -188,7 +181,6 @@
                         class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition-all resize-none"></textarea>
                 </div>
 
-                <!-- Image Upload Section -->
                 <div>
                     <label class="block text-sm text-blue-200 mb-1">ใส่รูปภาพ (ถ้ามี)</label>
                     <div class="flex items-center gap-4">
@@ -197,51 +189,45 @@
                     </div>
                 </div>
 
-                <!-- Krathong Style Selector -->
+                <!-- Krathong Section -->
                 <div id="krathong-options" class="space-y-4 transition-all duration-300">
                     <div>
                         <label class="block text-sm text-blue-200 mb-2">เลือกฐานกระทง (Base)</label>
                         <div class="grid grid-cols-3 gap-2 md:gap-3">
                             <label class="cursor-pointer relative text-center">
                                 <input type="radio" name="k-base" value="banana" checked class="peer sr-only">
-                                <div class="p-2 md:p-3 rounded-xl border border-white/10 peer-checked:border-yellow-400 peer-checked:bg-yellow-400/20 transition-all hover:bg-white/5 shadow-sm">
-                                    <div class="text-2xl md:text-3xl mb-1">🌿</div>
-                                    <div class="text-[10px] md:text-xs font-medium">ใบตอง</div>
+                                <div class="p-2 rounded-xl border border-white/10 peer-checked:border-yellow-400 peer-checked:bg-yellow-400/20 transition-all hover:bg-white/5 shadow-sm">
+                                    <div class="text-2xl mb-1">🌿</div><div class="text-[10px] md:text-xs">ใบตอง</div>
                                 </div>
                             </label>
                             <label class="cursor-pointer relative text-center">
                                 <input type="radio" name="k-base" value="lotus" class="peer sr-only">
-                                <div class="p-2 md:p-3 rounded-xl border border-white/10 peer-checked:border-yellow-400 peer-checked:bg-yellow-400/20 transition-all hover:bg-white/5 shadow-sm">
-                                    <div class="text-2xl md:text-3xl mb-1 drop-shadow-md">🪷</div>
-                                    <div class="text-[10px] md:text-xs font-medium">ดอกบัว</div>
+                                <div class="p-2 rounded-xl border border-white/10 peer-checked:border-yellow-400 peer-checked:bg-yellow-400/20 transition-all hover:bg-white/5 shadow-sm">
+                                    <div class="text-2xl mb-1">🪷</div><div class="text-[10px] md:text-xs">ดอกบัว</div>
                                 </div>
                             </label>
                             <label class="cursor-pointer relative text-center">
                                 <input type="radio" name="k-base" value="coconut" class="peer sr-only">
-                                <div class="p-2 md:p-3 rounded-xl border border-white/10 peer-checked:border-yellow-400 peer-checked:bg-yellow-400/20 transition-all hover:bg-white/5 shadow-sm">
-                                    <div class="text-2xl md:text-3xl mb-1">🥥</div>
-                                    <div class="text-[10px] md:text-xs font-medium">กะลา</div>
+                                <div class="p-2 rounded-xl border border-white/10 peer-checked:border-yellow-400 peer-checked:bg-yellow-400/20 transition-all hover:bg-white/5 shadow-sm">
+                                    <div class="text-2xl mb-1">🥥</div><div class="text-[10px] md:text-xs">กะลา</div>
                                 </div>
                             </label>
                             <label class="cursor-pointer relative text-center">
                                 <input type="radio" name="k-base" value="bread" class="peer sr-only">
-                                <div class="p-2 md:p-3 rounded-xl border border-white/10 peer-checked:border-yellow-400 peer-checked:bg-yellow-400/20 transition-all hover:bg-white/5 shadow-sm">
-                                    <div class="text-2xl md:text-3xl mb-1">🍞</div>
-                                    <div class="text-[10px] md:text-xs font-medium">ขนมปัง</div>
+                                <div class="p-2 rounded-xl border border-white/10 peer-checked:border-yellow-400 peer-checked:bg-yellow-400/20 transition-all hover:bg-white/5 shadow-sm">
+                                    <div class="text-2xl mb-1">🍞</div><div class="text-[10px] md:text-xs">ขนมปัง</div>
                                 </div>
                             </label>
                             <label class="cursor-pointer relative text-center">
                                 <input type="radio" name="k-base" value="ice" class="peer sr-only">
-                                <div class="p-2 md:p-3 rounded-xl border border-white/10 peer-checked:border-yellow-400 peer-checked:bg-yellow-400/20 transition-all hover:bg-white/5 shadow-sm">
-                                    <div class="text-2xl md:text-3xl mb-1">🧊</div>
-                                    <div class="text-[10px] md:text-xs font-medium">น้ำแข็ง</div>
+                                <div class="p-2 rounded-xl border border-white/10 peer-checked:border-yellow-400 peer-checked:bg-yellow-400/20 transition-all hover:bg-white/5 shadow-sm">
+                                    <div class="text-2xl mb-1">🧊</div><div class="text-[10px] md:text-xs">น้ำแข็ง</div>
                                 </div>
                             </label>
                             <label class="cursor-pointer relative text-center">
                                 <input type="radio" name="k-base" value="paper" class="peer sr-only">
-                                <div class="p-2 md:p-3 rounded-xl border border-white/10 peer-checked:border-yellow-400 peer-checked:bg-yellow-400/20 transition-all hover:bg-white/5 shadow-sm">
-                                    <div class="text-2xl md:text-3xl mb-1">♻️</div>
-                                    <div class="text-[10px] md:text-xs font-medium">กระดาษ</div>
+                                <div class="p-2 rounded-xl border border-white/10 peer-checked:border-yellow-400 peer-checked:bg-yellow-400/20 transition-all hover:bg-white/5 shadow-sm">
+                                    <div class="text-2xl mb-1">♻️</div><div class="text-[10px] md:text-xs">กระดาษ</div>
                                 </div>
                             </label>
                         </div>
@@ -252,37 +238,26 @@
                         <div class="grid grid-cols-3 gap-2 md:gap-3">
                             <label class="cursor-pointer relative text-center">
                                 <input type="radio" name="k-flower" value="marigold" checked class="peer sr-only">
-                                <div class="p-2 md:p-3 rounded-xl border border-white/10 peer-checked:border-pink-400 peer-checked:bg-pink-400/20 transition-all hover:bg-white/5 shadow-sm">
-                                    <div class="text-2xl md:text-3xl mb-1">🌼</div>
-                                    <div class="text-[10px] md:text-xs font-medium">ดาวเรือง</div>
+                                <div class="p-2 rounded-xl border border-white/10 peer-checked:border-pink-400 peer-checked:bg-pink-400/20 transition-all hover:bg-white/5 shadow-sm">
+                                    <div class="text-2xl mb-1">🌼</div><div class="text-[10px] md:text-xs">ดาวเรือง</div>
                                 </div>
                             </label>
                             <label class="cursor-pointer relative text-center">
                                 <input type="radio" name="k-flower" value="orchid" class="peer sr-only">
-                                <div class="p-2 md:p-3 rounded-xl border border-white/10 peer-checked:border-pink-400 peer-checked:bg-pink-400/20 transition-all hover:bg-white/5 shadow-sm">
-                                    <div class="text-2xl md:text-3xl mb-1">🌺</div>
-                                    <div class="text-[10px] md:text-xs font-medium">กล้วยไม้</div>
-                                </div>
-                            </label>
-                            <label class="cursor-pointer relative text-center">
-                                <input type="radio" name="k-flower" value="rose" class="peer sr-only">
-                                <div class="p-2 md:p-3 rounded-xl border border-white/10 peer-checked:border-pink-400 peer-checked:bg-pink-400/20 transition-all hover:bg-white/5 shadow-sm">
-                                    <div class="text-2xl md:text-3xl mb-1">🌹</div>
-                                    <div class="text-[10px] md:text-xs font-medium">กุหลาบ</div>
+                                <div class="p-2 rounded-xl border border-white/10 peer-checked:border-pink-400 peer-checked:bg-pink-400/20 transition-all hover:bg-white/5 shadow-sm">
+                                    <div class="text-2xl mb-1">🌺</div><div class="text-[10px] md:text-xs">กล้วยไม้</div>
                                 </div>
                             </label>
                             <label class="cursor-pointer relative text-center">
                                 <input type="radio" name="k-flower" value="jasmine" class="peer sr-only">
-                                <div class="p-2 md:p-3 rounded-xl border border-white/10 peer-checked:border-pink-400 peer-checked:bg-pink-400/20 transition-all hover:bg-white/5 shadow-sm">
-                                    <div class="text-2xl md:text-3xl mb-1">🤍</div>
-                                    <div class="text-[10px] md:text-xs font-medium">มะลิ</div>
+                                <div class="p-2 rounded-xl border border-white/10 peer-checked:border-pink-400 peer-checked:bg-pink-400/20 transition-all hover:bg-white/5 shadow-sm">
+                                    <div class="text-2xl mb-1">🤍</div><div class="text-[10px] md:text-xs">มะลิ</div>
                                 </div>
                             </label>
                             <label class="cursor-pointer relative text-center">
                                 <input type="radio" name="k-flower" value="amaranth" class="peer sr-only">
-                                <div class="p-2 md:p-3 rounded-xl border border-white/10 peer-checked:border-pink-400 peer-checked:bg-pink-400/20 transition-all hover:bg-white/5 shadow-sm">
-                                    <div class="text-2xl md:text-3xl mb-1">🌸</div>
-                                    <div class="text-[10px] md:text-xs font-medium">บานไม่รู้โรย</div>
+                                <div class="p-2 rounded-xl border border-white/10 peer-checked:border-pink-400 peer-checked:bg-pink-400/20 transition-all hover:bg-white/5 shadow-sm">
+                                    <div class="text-2xl mb-1">🌸</div><div class="text-[10px] md:text-xs">บานไม่รู้โรย</div>
                                 </div>
                             </label>
                         </div>
@@ -294,36 +269,32 @@
                             <label class="cursor-pointer relative text-center">
                                 <input type="radio" name="k-extra" value="candle" checked class="peer sr-only">
                                 <div class="p-2 rounded-xl border border-white/10 peer-checked:border-orange-400 peer-checked:bg-orange-400/20 transition-all hover:bg-white/5 shadow-sm">
-                                    <div class="text-2xl mb-1">🕯️</div>
-                                    <div class="text-[10px] md:text-xs font-medium">ธูปเทียน</div>
+                                    <div class="text-2xl mb-1">🕯️</div><div class="text-[10px] md:text-xs">ธูปเทียน</div>
                                 </div>
                             </label>
                             <label class="cursor-pointer relative text-center">
                                 <input type="radio" name="k-extra" value="sparkler" class="peer sr-only">
                                 <div class="p-2 rounded-xl border border-white/10 peer-checked:border-orange-400 peer-checked:bg-orange-400/20 transition-all hover:bg-white/5 shadow-sm">
-                                    <div class="text-2xl mb-1">✨</div>
-                                    <div class="text-[10px] md:text-xs font-medium">ไฟเย็น</div>
+                                    <div class="text-2xl mb-1">✨</div><div class="text-[10px] md:text-xs">ไฟเย็น</div>
                                 </div>
                             </label>
                             <label class="cursor-pointer relative text-center">
                                 <input type="radio" name="k-extra" value="coins" class="peer sr-only">
                                 <div class="p-2 rounded-xl border border-white/10 peer-checked:border-orange-400 peer-checked:bg-orange-400/20 transition-all hover:bg-white/5 shadow-sm">
-                                    <div class="text-2xl mb-1">🪙</div>
-                                    <div class="text-[10px] md:text-xs font-medium">เหรียญทอง</div>
+                                    <div class="text-2xl mb-1">🪙</div><div class="text-[10px] md:text-xs">เหรียญทอง</div>
                                 </div>
                             </label>
                             <label class="cursor-pointer relative text-center">
                                 <input type="radio" name="k-extra" value="duck" class="peer sr-only">
                                 <div class="p-2 rounded-xl border border-white/10 peer-checked:border-orange-400 peer-checked:bg-orange-400/20 transition-all hover:bg-white/5 shadow-sm">
-                                    <div class="text-2xl mb-1">🦆</div>
-                                    <div class="text-[10px] md:text-xs font-medium">เป็ดน้อย</div>
+                                    <div class="text-2xl mb-1">🦆</div><div class="text-[10px] md:text-xs">เป็ดน้อย</div>
                                 </div>
                             </label>
                         </div>
                     </div>
                 </div>
 
-                <!-- Lantern Style Selector -->
+                <!-- Lantern Section -->
                 <div id="lantern-options" class="space-y-4 hidden transition-all duration-300">
                     <div>
                         <label class="block text-sm text-blue-200 mb-2">เลือกสีโคมลอย (Color)</label>
@@ -372,13 +343,11 @@
         <span id="toast-msg" class="font-medium text-white"></span>
     </div>
 
-    <!-- Firebase and Application Logic -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-        // Global Environment Variables mapped for Immersive Apps
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'vsc-loi-krathong';
         let firebaseConfig = null;
         if (typeof __firebase_config !== 'undefined' && __firebase_config) {
@@ -389,8 +358,7 @@
             }
         }
 
-        // Initialize Firebase securely
-        let app, db, auth;
+        let app, db, auth, currentUser = null;
         let isOnline = false;
 
         if (firebaseConfig && Object.keys(firebaseConfig).length > 0) {
@@ -399,22 +367,16 @@
                 db = getFirestore(app);
                 auth = getAuth(app);
                 isOnline = true;
-            } catch (e) { 
-                console.error("Firebase init error", e); 
-            }
+            } catch (e) { console.error("Firebase init error", e); }
         }
         
-        let currentUser = null;
-        const krathongsMap = new Map();
-        const activeItems = new Map(); // เพิ่ม Map สำหรับจัดการตำแหน่งด้วย JS แบบ Real-time
-        let currentBase64Image = null; // ตัวแปรเก็บรูปภาพที่ถูกย่อขนาดและแปลงเป็น Base64 แล้ว
-        let currentActionType = 'krathong'; // สถานะว่ากำลังเลือกลอยกระทงหรือโคมลอย
+        const activeItemsMap = new Map();
+        let currentBase64Image = null; 
+        let currentActionType = 'krathong';
 
-        // --- Visual Effects Setup ---
         function generateStars() {
             const sky = document.getElementById('sky');
-            const numStars = 80;
-            for (let i = 0; i < numStars; i++) {
+            for (let i = 0; i < 100; i++) {
                 const star = document.createElement('div');
                 star.className = 'star';
                 const size = Math.random() * 2 + 1;
@@ -428,34 +390,29 @@
             }
         }
 
-        // --- Core Application Logic ---
         async function initApp() {
             generateStars();
             setupUIHandlers();
             
-            // เริ่มลูปคำนวณอนิเมชันแบบไร้ขีดจำกัด
             requestAnimationFrame(animationLoop);
 
             if (!isOnline || !auth || !db) {
-                showToast("ระบบออฟไลน์ (ข้อมูลจะไม่ถูกบันทึกเมื่อรีเฟรช)", true);
+                showToast("โหมดสาธิตออฟไลน์", true);
                 return;
             }
 
             try {
-                showToast("กำลังเชื่อมต่อเซิร์ฟเวอร์เพื่อดึงประวัติ...", false);
-                // Must Authenticate before initiating queries
+                showToast("กำลังเชื่อมต่อเซิร์ฟเวอร์ห้อง VSC...", false);
                 if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                     await signInWithCustomToken(auth, __initial_auth_token);
                 } else {
                     await signInAnonymously(auth);
                 }
                 currentUser = auth.currentUser;
-                
-                // Once authenticated, start listening to real-time events
-                listenToKrathongs();
+                listenToCompanyRoom();
             } catch (error) {
-                console.error("Authentication failed:", error);
-                showToast("ไม่สามารถเชื่อมต่อระบบได้", true);
+                console.error("Auth failed:", error);
+                showToast("การเชื่อมต่อล้มเหลว", true);
             }
         }
 
@@ -465,27 +422,25 @@
             
             const openModal = (type) => {
                 currentActionType = type;
-                
-                // Update UI based on type
                 const title = document.getElementById('modal-title');
                 const btnSubmit = document.getElementById('btn-submit');
-                const krathongOptions = document.getElementById('krathong-options');
-                const lanternOptions = document.getElementById('lantern-options');
+                const krathongOpts = document.getElementById('krathong-options');
+                const lanternOpts = document.getElementById('lantern-options');
 
                 if (type === 'krathong') {
                     title.innerText = 'สร้างกระทงของคุณ';
                     title.className = 'text-2xl font-semibold text-yellow-300';
                     btnSubmit.innerHTML = 'ปล่อยกระทง 🪷';
-                    btnSubmit.className = 'w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold py-3 rounded-xl shadow-lg transform transition-all active:scale-95 mt-6';
-                    krathongOptions.classList.remove('hidden');
-                    lanternOptions.classList.add('hidden');
+                    btnSubmit.className = 'w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold py-3 rounded-xl shadow-lg mt-6';
+                    krathongOpts.classList.remove('hidden');
+                    lanternOpts.classList.add('hidden');
                 } else {
                     title.innerText = 'สร้างโคมลอยของคุณ';
                     title.className = 'text-2xl font-semibold text-orange-400';
                     btnSubmit.innerHTML = 'ปล่อยโคมลอย 🏮';
-                    btnSubmit.className = 'w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 text-white font-semibold py-3 rounded-xl shadow-lg transform transition-all active:scale-95 mt-6';
-                    krathongOptions.classList.add('hidden');
-                    lanternOptions.classList.remove('hidden');
+                    btnSubmit.className = 'w-full bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-400 hover:to-red-500 text-white font-semibold py-3 rounded-xl shadow-lg mt-6';
+                    krathongOpts.classList.add('hidden');
+                    lanternOpts.classList.remove('hidden');
                 }
 
                 modal.classList.remove('hidden');
@@ -502,16 +457,14 @@
             const closeModal = () => {
                 modal.classList.add('opacity-0');
                 modalContent.classList.add('scale-95');
-                modal.classList.add('pointer-events-none'); // ป้องกันการคลิกเมื่อปิดหน้าต่าง
+                modal.classList.add('pointer-events-none');
                 setTimeout(() => modal.classList.add('hidden'), 300);
             };
 
             document.getElementById('btn-close-modal').addEventListener('click', closeModal);
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) closeModal();
-            });
+            modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
 
-            // Image Upload & Compression Handler
+            // Compress image logic
             document.getElementById('k-image').addEventListener('change', (e) => {
                 const file = e.target.files[0];
                 if (!file) {
@@ -526,31 +479,13 @@
                     img.onload = () => {
                         const canvas = document.createElement('canvas');
                         const MAX_SIZE = 64;
-                        let width = img.width;
-                        let height = img.height;
-
-                        // คำนวณสัดส่วนรูปภาพให้ไม่เกิน 64x64
-                        if (width > height) {
-                            if (width > MAX_SIZE) {
-                                height *= MAX_SIZE / width;
-                                width = MAX_SIZE;
-                            }
-                        } else {
-                            if (height > MAX_SIZE) {
-                                width *= MAX_SIZE / height;
-                                height = MAX_SIZE;
-                            }
-                        }
-
-                        canvas.width = width;
-                        canvas.height = height;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, width, height);
-                        
-                        // บีบอัดเป็น WebP (ประหยัดพื้นที่กว่า) หรือ JPEG
+                        let w = img.width, h = img.height;
+                        if (w > h) { if (w > MAX_SIZE) { h *= MAX_SIZE / w; w = MAX_SIZE; } } 
+                        else { if (h > MAX_SIZE) { w *= MAX_SIZE / h; h = MAX_SIZE; } }
+                        canvas.width = w; canvas.height = h;
+                        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
                         currentBase64Image = canvas.toDataURL('image/webp', 0.8);
                         
-                        // แสดงภาพพรีวิว
                         const preview = document.getElementById('k-image-preview');
                         preview.src = currentBase64Image;
                         preview.classList.remove('hidden');
@@ -560,10 +495,9 @@
                 reader.readAsDataURL(file);
             });
 
-            // The critical form submission handler
             document.getElementById('krathong-form').addEventListener('submit', async (e) => {
-                e.preventDefault(); // Prevents page reload
-                await submitKrathong();
+                e.preventDefault();
+                await submitItem();
                 closeModal();
             });
         }
@@ -571,352 +505,218 @@
         function showToast(message, isError = false) {
             const toast = document.getElementById('toast');
             document.getElementById('toast-msg').innerText = message;
-            
             toast.className = `fixed top-6 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-full shadow-2xl z-50 flex items-center gap-2 transition-opacity duration-300 text-white ${isError ? 'bg-red-500' : 'bg-green-500'}`;
-            
             setTimeout(() => { toast.classList.remove('opacity-0'); }, 10);
             setTimeout(() => { toast.classList.add('opacity-0'); }, 3000);
         }
 
-        // --- Database Logic ---
-        async function submitKrathong() {
+        async function submitItem() {
             const name = document.getElementById('k-name').value.trim();
             const wish = document.getElementById('k-wish').value.trim();
             
-            // Gather properties based on type
-            const baseStyle = document.querySelector('input[name="k-base"]:checked').value;
-            const flowerStyle = document.querySelector('input[name="k-flower"]:checked').value;
-            const extraStyle = document.querySelector('input[name="k-extra"]:checked').value;
-            const lanternColor = document.querySelector('input[name="l-color"]:checked').value;
-            
-            // Generate random positions and timings
-            const posPercent = Math.floor(Math.random() * 80) + 10; // Use for top (Krathong) or left (Lantern)
-            const duration = Math.floor(Math.random() * 40) + (currentActionType === 'krathong' ? 40 : 25); 
-            
-            const dataPayload = {
+            const payload = {
                 type: currentActionType,
                 userId: currentUser ? currentUser.uid : 'local-user',
                 name: name,
                 wish: wish,
                 image: currentBase64Image,
-                posPercent: posPercent,
-                duration: duration,
+                // Assign a depth tracking layer
+                depthPercent: Math.floor(Math.random() * 80) + 10,
+                // Duration for the loop
+                duration: Math.floor(Math.random() * 30) + (currentActionType === 'krathong' ? 45 : 30),
                 createdAt: Date.now()
             };
 
-            // Add specific details
             if (currentActionType === 'krathong') {
-                dataPayload.base = baseStyle;
-                dataPayload.flower = flowerStyle;
-                dataPayload.extra = extraStyle;
-                dataPayload.topPercent = posPercent; // Backward compatibility
+                payload.base = document.querySelector('input[name="k-base"]:checked').value;
+                payload.flower = document.querySelector('input[name="k-flower"]:checked').value;
+                payload.extra = document.querySelector('input[name="k-extra"]:checked').value;
             } else {
-                dataPayload.lanternColor = lanternColor;
-                dataPayload.leftPercent = posPercent;
+                payload.lanternColor = document.querySelector('input[name="l-color"]:checked').value;
             }
 
-            // Fallback for local testing without Firebase Config
             if (!isOnline || !db || !currentUser) {
-                renderItem(Date.now().toString(), dataPayload);
+                renderItemToDOM(Date.now().toString(), payload);
                 document.getElementById('krathong-form').reset();
                 currentBase64Image = null; 
                 document.getElementById('k-image-preview').classList.add('hidden');
-                showToast(`ปล่อย${currentActionType === 'krathong' ? 'กระทง' : 'โคมลอย'}สำเร็จ! ${currentActionType === 'krathong' ? '🪷' : '🏮'} (โหมดออฟไลน์)`);
+                showToast(`ปล่อยสำเร็จ (ออฟไลน์)`);
                 return;
             }
 
             const btn = document.getElementById('btn-submit');
-            btn.disabled = true;
-            btn.innerHTML = 'กำลังปล่อย...';
+            btn.disabled = true; btn.innerHTML = 'กำลังปล่อย...';
 
             try {
-                // Strict path writing for artifacts
-                const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'krathongs');
-                await addDoc(colRef, dataPayload);
-                
+                // REQUIRED FIREBASE SECURE PATH MAPPING FOR THE COMPANY ROOM
+                const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'vsc_company_krathong_room');
+                await addDoc(colRef, payload);
                 document.getElementById('krathong-form').reset();
                 currentBase64Image = null;
                 document.getElementById('k-image-preview').classList.add('hidden');
-                showToast(`ปล่อย${currentActionType === 'krathong' ? 'กระทง' : 'โคมลอย'}สำเร็จ! ${currentActionType === 'krathong' ? '🪷' : '🏮'}`);
+                showToast(`ปล่อยสำเร็จ! 🎉`);
             } catch (err) {
-                console.error("Error adding doc: ", err);
-                showToast("เกิดข้อผิดพลาด กรุณาลองใหม่", true);
+                console.error(err);
+                showToast("เกิดข้อผิดพลาด", true);
             } finally {
                 btn.disabled = false;
                 btn.innerHTML = currentActionType === 'krathong' ? 'ปล่อยกระทง 🪷' : 'ปล่อยโคมลอย 🏮';
             }
         }
 
-        function listenToKrathongs() {
+        function listenToCompanyRoom() {
             if (!db) return;
-            const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'krathongs');
-            
+            // CRITICAL: Connect to the exact same static room collection name
+            const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'vsc_company_krathong_room');
             let isFirstLoad = true;
 
             onSnapshot(colRef, (snapshot) => {
                 snapshot.docChanges().forEach((change) => {
-                    if (change.type === 'added') {
-                        renderItem(change.doc.id, change.doc.data());
-                    }
-                    if (change.type === 'removed') {
-                        removeKrathong(change.doc.id);
-                    }
+                    if (change.type === 'added') renderItemToDOM(change.doc.id, change.doc.data());
+                    if (change.type === 'removed') removeItem(change.doc.id);
                 });
 
                 if (isFirstLoad) {
-                    if (snapshot.size > 0) {
-                        showToast(`โหลดประวัติสำเร็จ ${snapshot.size} รายการ! 🎉`, false);
-                    } else {
-                        showToast(`เชื่อมต่อสำเร็จ พร้อมลอยกระทงแล้ว! 🪷`, false);
-                    }
+                    showToast(`เชื่อมต่อห้อง VSC สำเร็จ! พบข้อมูล ${snapshot.size} รายการ`, false);
                     isFirstLoad = false;
                 }
-            }, (error) => {
-                console.error("Listen failed: ", error);
-            });
+            }, (err) => console.error("Listen fail: ", err));
         }
 
-        // --- Rendering Logic ---
-        function generateKrathongVisual(base, flower, extra, userImage) {
-            let baseHtml = '';
-            
-            // Flower mapping
+        // --- Render Generation ---
+        function getKrathongHTML(d) {
             let flowerEmoji = '🌼';
-            if (flower === 'orchid') flowerEmoji = '🌺';
-            if (flower === 'rose') flowerEmoji = '🌹';
-            if (flower === 'jasmine') flowerEmoji = '🤍';
-            if (flower === 'amaranth') flowerEmoji = '🌸';
+            if (d.flower === 'orchid') flowerEmoji = '🌺';
+            if (d.flower === 'rose') flowerEmoji = '🌹';
+            if (d.flower === 'jasmine') flowerEmoji = '🤍';
+            if (d.flower === 'amaranth') flowerEmoji = '🌸';
             
-            let flowersHtml = `
-                <div class="absolute -top-3 flex justify-center w-full text-lg drop-shadow-md z-10">
-                    <span class="-mr-1">${flowerEmoji}</span>
-                    <span class="mb-2 z-10 scale-110">${flowerEmoji}</span>
-                    <span class="-ml-1">${flowerEmoji}</span>
-                </div>
-            `;
+            const flowers = `<div class="absolute -top-3 flex justify-center w-full text-lg drop-shadow-md z-10"><span class="-mr-1">${flowerEmoji}</span><span class="mb-2 z-10 scale-110">${flowerEmoji}</span><span class="-ml-1">${flowerEmoji}</span></div>`;
 
-            // Extras mapping
             let extraHtml = '';
-            if (!extra || extra === 'candle') {
-                extraHtml = `
-                    <div class="absolute -top-8 flex gap-0.5 items-end justify-center w-full z-20">
-                        <div class="w-1 h-6 bg-amber-900 rounded-t-sm shadow-sm relative"><div class="absolute -top-1 left-0 w-full h-1 bg-red-500 rounded-full shadow-[0_0_3px_red]"></div></div>
-                        <div class="w-1 h-7 bg-amber-900 rounded-t-sm shadow-sm relative"><div class="absolute -top-1 left-0 w-full h-1 bg-red-500 rounded-full shadow-[0_0_3px_red]"></div></div>
-                        <div class="w-1 h-6 bg-amber-900 rounded-t-sm shadow-sm relative"><div class="absolute -top-1 left-0 w-full h-1 bg-red-500 rounded-full shadow-[0_0_3px_red]"></div></div>
-                        <div class="w-1.5 h-5 bg-yellow-200 ml-1 rounded-sm relative shadow-sm">
-                            <div class="absolute -top-3 -left-[3px] candle-flame"></div>
-                        </div>
-                    </div>
-                `;
-            } else if (extra === 'sparkler') {
-                extraHtml = `
-                    <div class="absolute -top-8 flex justify-center w-full z-20">
-                        <div class="text-2xl animate-pulse drop-shadow-[0_0_15px_#fde047] filter brightness-125">✨</div>
-                        <div class="w-1 h-6 bg-gray-400 rounded-full absolute top-5"></div>
-                    </div>
-                `;
-            } else if (extra === 'coins') {
-                extraHtml = `
-                    <div class="absolute -top-5 flex justify-center gap-1 w-full z-20 text-lg drop-shadow-[0_2px_5px_rgba(0,0,0,0.5)]">
-                        <div class="transform rotate-12">🪙</div>
-                        <div class="transform -rotate-12 mt-1">🪙</div>
-                        <div class="transform rotate-45">🪙</div>
-                    </div>
-                `;
-            } else if (extra === 'duck') {
-                extraHtml = `
-                    <div class="absolute -top-7 flex justify-center w-full z-20 text-[28px] drop-shadow-md">
-                        🦆
-                    </div>
-                `;
+            if (!d.extra || d.extra === 'candle') {
+                extraHtml = `<div class="absolute -top-8 flex gap-0.5 items-end justify-center w-full z-20"><div class="w-1 h-6 bg-amber-900 rounded-t-sm shadow-sm relative"><div class="absolute -top-1 left-0 w-full h-1 bg-red-500 rounded-full shadow-[0_0_3px_red]"></div></div><div class="w-1 h-7 bg-amber-900 rounded-t-sm shadow-sm relative"><div class="absolute -top-1 left-0 w-full h-1 bg-red-500 rounded-full shadow-[0_0_3px_red]"></div></div><div class="w-1 h-6 bg-amber-900 rounded-t-sm shadow-sm relative"><div class="absolute -top-1 left-0 w-full h-1 bg-red-500 rounded-full shadow-[0_0_3px_red]"></div></div><div class="w-1.5 h-5 bg-yellow-200 ml-1 rounded-sm relative shadow-sm"><div class="absolute -top-3 -left-[3px] candle-flame"></div></div></div>`;
+            } else if (d.extra === 'sparkler') {
+                extraHtml = `<div class="absolute -top-8 flex justify-center w-full z-20"><div class="text-2xl animate-pulse drop-shadow-[0_0_15px_#fde047] filter brightness-125">✨</div><div class="w-1 h-6 bg-gray-400 rounded-full absolute top-5"></div></div>`;
+            } else if (d.extra === 'coins') {
+                extraHtml = `<div class="absolute -top-5 flex justify-center gap-1 w-full z-20 text-lg drop-shadow-[0_2px_5px_rgba(0,0,0,0.5)]"><div class="transform rotate-12">🪙</div><div class="transform -rotate-12 mt-1">🪙</div><div class="transform rotate-45">🪙</div></div>`;
+            } else if (d.extra === 'duck') {
+                extraHtml = `<div class="absolute -top-7 flex justify-center w-full z-20 text-[28px] drop-shadow-md">🦆</div>`;
             }
 
-            // Bases mapping
-            if (base === 'banana') {
-                baseHtml = `
-                    <div class="relative w-16 h-6 bg-green-700 rounded-[50%] shadow-[inset_0_-4px_rgba(0,0,0,0.4),0_2px_4px_rgba(0,0,0,0.5)] border border-green-600 flex items-center justify-center z-10">
-                        <div class="absolute top-0 w-14 h-4 bg-green-500 rounded-[50%] border border-green-600/50"></div>
-                    </div>
-                `;
-            } else if (base === 'lotus') {
-                baseHtml = `
-                    <div class="relative w-16 h-8 flex items-end justify-center z-10">
-                        <div class="text-[3rem] leading-none drop-shadow-lg -mb-2">🪷</div>
-                    </div>
-                `;
-                flowersHtml = `
-                    <div class="absolute -top-1 flex justify-center w-full text-base drop-shadow-md z-10">
-                        <span>${flowerEmoji}</span>
-                    </div>
-                `;
-            } else if (base === 'coconut') {
-                baseHtml = `
-                    <div class="relative w-14 h-7 bg-[#4a2e15] rounded-b-[30px] rounded-t-[50%] shadow-[inset_0_-5px_rgba(0,0,0,0.6),0_2px_4px_rgba(0,0,0,0.5)] border-t-[3px] border-[#7a4823] z-10">
-                    </div>
-                `;
-            } else if (base === 'bread') {
-                baseHtml = `
-                    <div class="relative w-16 h-7 bg-[#d4a373] rounded-[40%] shadow-[inset_0_-4px_rgba(0,0,0,0.2),0_2px_4px_rgba(0,0,0,0.5)] border border-[#bc6c25] flex items-center justify-center z-10">
-                        <div class="absolute top-0 w-14 h-4 bg-[#faedcd] rounded-[40%]"></div>
-                    </div>
-                `;
-            } else if (base === 'ice') {
-                baseHtml = `
-                    <div class="relative w-16 h-7 bg-cyan-200/50 backdrop-blur-md rounded-[10%] shadow-[inset_0_0_10px_rgba(255,255,255,0.8),0_2px_10px_rgba(34,211,238,0.6)] border border-white/80 z-10">
-                    </div>
-                `;
-            } else if (base === 'paper') {
-                baseHtml = `
-                    <div class="relative w-16 h-7 bg-[#e0e0e0] rounded-b-[20px] rounded-t-[50%] shadow-[inset_0_-5px_rgba(0,0,0,0.2),0_2px_4px_rgba(0,0,0,0.5)] border border-[#9e9e9e] flex items-center justify-center z-10">
-                        <div class="absolute top-0 w-14 h-3 bg-[#f5f5f5] rounded-[50%] border border-[#bdbdbd]"></div>
-                    </div>
-                `;
-            }
+            let baseHtml = '';
+            if (d.base === 'banana') baseHtml = `<div class="relative w-16 h-6 bg-green-700 rounded-[50%] shadow-[inset_0_-4px_rgba(0,0,0,0.4),0_2px_4px_rgba(0,0,0,0.5)] border border-green-600 flex items-center justify-center z-10"><div class="absolute top-0 w-14 h-4 bg-green-500 rounded-[50%] border border-green-600/50"></div></div>`;
+            else if (d.base === 'lotus') baseHtml = `<div class="relative w-16 h-8 flex items-end justify-center z-10"><div class="text-[3rem] leading-none drop-shadow-lg -mb-2">🪷</div></div>`;
+            else if (d.base === 'coconut') baseHtml = `<div class="relative w-14 h-7 bg-[#4a2e15] rounded-b-[30px] rounded-t-[50%] shadow-[inset_0_-5px_rgba(0,0,0,0.6),0_2px_4px_rgba(0,0,0,0.5)] border-t-[3px] border-[#7a4823] z-10"></div>`;
+            else if (d.base === 'bread') baseHtml = `<div class="relative w-16 h-7 bg-[#d4a373] rounded-[40%] shadow-[inset_0_-4px_rgba(0,0,0,0.2),0_2px_4px_rgba(0,0,0,0.5)] border border-[#bc6c25] flex items-center justify-center z-10"><div class="absolute top-0 w-14 h-4 bg-[#faedcd] rounded-[40%]"></div></div>`;
+            else if (d.base === 'ice') baseHtml = `<div class="relative w-16 h-7 bg-cyan-200/50 backdrop-blur-md rounded-[10%] shadow-[inset_0_0_10px_rgba(255,255,255,0.8),0_2px_10px_rgba(34,211,238,0.6)] border border-white/80 z-10"></div>`;
+            else if (d.base === 'paper') baseHtml = `<div class="relative w-16 h-7 bg-[#e0e0e0] rounded-b-[20px] rounded-t-[50%] shadow-[inset_0_-5px_rgba(0,0,0,0.2),0_2px_4px_rgba(0,0,0,0.5)] border border-[#9e9e9e] flex items-center justify-center z-10"><div class="absolute top-0 w-14 h-3 bg-[#f5f5f5] rounded-[50%] border border-[#bdbdbd]"></div></div>`;
             
-            let userImageHtml = '';
-            if (userImage) {
-                userImageHtml = `
-                    <div class="absolute -top-11 -right-2 z-30 w-8 h-8 rounded-full border-[1.5px] border-white/80 shadow-[0_0_8px_rgba(255,255,255,0.4)] overflow-hidden bg-white/20 transform rotate-[10deg]">
-                        <img src="${userImage}" class="w-full h-full object-cover" alt="User">
-                    </div>
-                `;
-            }
+            const userImg = d.image ? `<div class="absolute -top-11 -right-2 z-30 w-8 h-8 rounded-full border-[1.5px] border-white/80 shadow-[0_0_8px_rgba(255,255,255,0.4)] overflow-hidden bg-white/20 transform rotate-[10deg]"><img src="${d.image}" class="w-full h-full object-cover"></div>` : '';
             
-            return `
-                <div class="relative flex flex-col items-center mt-6">
-                    ${userImageHtml}
-                    ${extraHtml}
-                    ${flowersHtml}
-                    ${baseHtml}
-                    <div class="absolute -bottom-2 w-16 h-4 bg-blue-400/20 rounded-[50%] blur-sm z-0"></div>
-                </div>
-            `;
+            return `<div class="relative flex flex-col items-center mt-6">${userImg}${extraHtml}${d.base === 'lotus' ? `<div class="absolute -top-1 z-10"><span>${flowerEmoji}</span></div>` : flowers}${baseHtml}<div class="absolute -bottom-2 w-16 h-4 bg-blue-400/20 rounded-[50%] blur-sm z-0"></div></div>`;
         }
 
-        function generateLanternVisual(color, userImage) {
-            let colorClasses = '';
-            let shadowColor = '';
-            if (color === 'orange') { colorClasses = 'bg-gradient-to-b from-orange-400 to-orange-600'; shadowColor = 'rgba(251,146,60,0.8)'; }
-            else if (color === 'yellow') { colorClasses = 'bg-gradient-to-b from-yellow-300 to-yellow-500'; shadowColor = 'rgba(250,204,21,0.8)'; }
-            else if (color === 'red') { colorClasses = 'bg-gradient-to-b from-red-400 to-red-600'; shadowColor = 'rgba(248,113,113,0.8)'; }
-            else if (color === 'white') { colorClasses = 'bg-gradient-to-b from-gray-100 to-gray-300'; shadowColor = 'rgba(255,255,255,0.8)'; }
-            else { colorClasses = 'bg-gradient-to-b from-orange-400 to-orange-600'; shadowColor = 'rgba(251,146,60,0.8)'; }
+        function getLanternHTML(d) {
+            let colorCls = 'bg-gradient-to-b from-orange-400 to-orange-600', shadow = 'rgba(251,146,60,0.8)';
+            if (d.lanternColor === 'yellow') { colorCls = 'bg-gradient-to-b from-yellow-300 to-yellow-500'; shadow = 'rgba(250,204,21,0.8)'; }
+            else if (d.lanternColor === 'red') { colorCls = 'bg-gradient-to-b from-red-400 to-red-600'; shadow = 'rgba(248,113,113,0.8)'; }
+            else if (d.lanternColor === 'white') { colorCls = 'bg-gradient-to-b from-gray-100 to-gray-300'; shadow = 'rgba(255,255,255,0.8)'; }
 
-            let userImageHtml = '';
-            if (userImage) {
-                userImageHtml = `
-                    <div class="absolute -right-4 top-1/4 z-30 w-8 h-8 rounded-full border-[1.5px] border-white/80 shadow-[0_0_8px_rgba(255,255,255,0.4)] overflow-hidden bg-white/20 transform rotate-[10deg]">
-                        <img src="${userImage}" class="w-full h-full object-cover" alt="User">
-                    </div>
-                `;
-            }
-
-            return `
-                <div class="relative flex flex-col items-center mt-8">
-                    ${userImageHtml}
-                    <div class="relative w-14 h-20 ${colorClasses} rounded-t-[50%] rounded-b-[20%] shadow-[inset_0_-10px_20px_rgba(0,0,0,0.5),0_0_30px_${shadowColor}] flex justify-center items-end pb-1.5 z-10">
-                        <!-- Lantern Base Ring -->
-                        <div class="w-10 h-1.5 bg-amber-900 rounded-sm z-20"></div>
-                        <!-- Flame Glow -->
-                        <div class="absolute bottom-2 w-6 h-6 bg-yellow-100 rounded-full blur-md opacity-80 animate-pulse z-10"></div>
-                        <div class="absolute bottom-3 w-3 h-3 bg-white rounded-full blur-sm z-10"></div>
-                    </div>
-                </div>
-            `;
+            const userImg = d.image ? `<div class="absolute -right-4 top-1/4 z-30 w-8 h-8 rounded-full border-[1.5px] border-white/80 shadow-[0_0_8px_rgba(255,255,255,0.4)] overflow-hidden bg-white/20 transform rotate-[10deg]"><img src="${d.image}" class="w-full h-full object-cover"></div>` : '';
+            return `<div class="relative flex flex-col items-center mt-8">${userImg}<div class="relative w-14 h-20 ${colorCls} rounded-t-[50%] rounded-b-[20%] shadow-[inset_0_-10px_20px_rgba(0,0,0,0.5),0_0_30px_${shadow}] flex justify-center items-end pb-1.5 z-10"><div class="w-10 h-1.5 bg-amber-900 rounded-sm z-20"></div><div class="absolute bottom-2 w-6 h-6 bg-yellow-100 rounded-full blur-md opacity-80 animate-pulse z-10"></div><div class="absolute bottom-3 w-3 h-3 bg-white rounded-full blur-sm z-10"></div></div></div>`;
         }
 
-        function renderItem(id, data) {
-            if (krathongsMap.has(id)) return; // Prevent dupes
+        function renderItemToDOM(id, data) {
+            if (activeItemsMap.has(id)) return;
 
             const isLantern = data.type === 'lantern';
             const container = document.getElementById(isLantern ? 'sky' : 'krathong-container');
-            
             const wrapper = document.createElement('div');
-            wrapper.id = `krathong-${id}`;
+            wrapper.id = `item-${id}`;
+
+            const scale = 0.5 + (data.depthPercent / 100) * 0.7; 
 
             if (isLantern) {
-                // --- Lantern Rendering ---
                 wrapper.className = 'lantern-wrapper';
-                const scale = 0.5 + (Math.random() * 0.5); // Random scale for depth
-                
-                wrapper.style.left = `${data.leftPercent || data.posPercent}%`;
-                wrapper.style.zIndex = Math.floor(Math.random() * 20); // Random depth in sky
+                wrapper.style.zIndex = Math.floor(data.depthPercent);
                 wrapper.style.transform = `scale(${scale})`;
+                
+                // Add left wobble based on depth for lanterns
+                wrapper.style.left = `${data.depthPercent}%`; 
 
                 wrapper.innerHTML = `
                     <div class="lantern-body relative">
-                        <div class="absolute bottom-full mb-2 flex flex-col items-center pointer-events-none w-max max-w-[160px] z-30 transition-transform hover:scale-110">
-                            <div class="glass-panel px-3 py-2 rounded-xl shadow-[0_0_15px_rgba(255,255,255,0.1)] border border-white/20 text-center backdrop-blur-md">
-                                <p class="font-bold text-orange-200 text-sm truncate max-w-full w-full tracking-wide">${escapeHtml(data.name)}</p>
-                                ${data.wish ? `<p class="text-[11px] text-white/90 line-clamp-2 mt-0.5 leading-tight">${escapeHtml(data.wish)}</p>` : ''}
+                        <div class="absolute bottom-full mb-2 flex flex-col items-center pointer-events-none w-max max-w-[160px] z-30 hover:scale-110">
+                            <div class="glass-panel px-3 py-2 rounded-xl shadow-[0_0_15px_rgba(255,255,255,0.1)] border border-white/20 text-center">
+                                <p class="font-bold text-orange-200 text-sm truncate max-w-full tracking-wide">${escapeHtml(data.name)}</p>
+                                ${data.wish ? `<p class="text-[11px] text-white/90 line-clamp-2 mt-0.5">${escapeHtml(data.wish)}</p>` : ''}
                             </div>
                             <div class="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[8px] border-t-white/30 -mt-[1px]"></div>
                         </div>
-                        ${generateLanternVisual(data.lanternColor, data.image)}
+                        ${getLanternHTML(data)}
                     </div>
                 `;
             } else {
-                // --- Krathong Rendering ---
                 wrapper.className = 'krathong-wrapper';
-                const scale = 0.5 + ((data.topPercent || data.posPercent) / 100) * 0.7; 
-                const zIndex = Math.floor(data.topPercent || data.posPercent); 
-                
-                wrapper.style.top = `${data.topPercent || data.posPercent}%`;
-                wrapper.style.zIndex = zIndex;
+                wrapper.style.top = `${data.depthPercent}%`;
+                wrapper.style.zIndex = Math.floor(data.depthPercent);
                 wrapper.style.transform = `scale(${scale})`;
 
                 wrapper.innerHTML = `
                     <div class="krathong-bob relative">
-                        <div class="absolute bottom-full mb-3 flex flex-col items-center pointer-events-none w-max max-w-[160px] z-30 transition-transform hover:scale-110">
-                            <div class="glass-panel px-3 py-2 rounded-xl shadow-[0_0_15px_rgba(255,255,255,0.1)] border border-white/20 text-center backdrop-blur-md">
-                                <p class="font-bold text-yellow-300 text-sm truncate max-w-full w-full tracking-wide">${escapeHtml(data.name)}</p>
-                                ${data.wish ? `<p class="text-[11px] text-white/90 line-clamp-2 mt-0.5 leading-tight">${escapeHtml(data.wish)}</p>` : ''}
+                        <div class="absolute bottom-full mb-3 flex flex-col items-center pointer-events-none w-max max-w-[160px] z-30 hover:scale-110">
+                            <div class="glass-panel px-3 py-2 rounded-xl shadow-[0_0_15px_rgba(255,255,255,0.1)] border border-white/20 text-center">
+                                <p class="font-bold text-yellow-300 text-sm truncate max-w-full tracking-wide">${escapeHtml(data.name)}</p>
+                                ${data.wish ? `<p class="text-[11px] text-white/90 line-clamp-2 mt-0.5">${escapeHtml(data.wish)}</p>` : ''}
                             </div>
                             <div class="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[8px] border-t-white/30 -mt-[1px]"></div>
                         </div>
-                        ${generateKrathongVisual(data.base || 'banana', data.flower || 'marigold', data.extra || 'candle', data.image)}
+                        ${getKrathongHTML(data)}
                     </div>
                 `;
             }
 
             container.appendChild(wrapper);
-            krathongsMap.set(id, wrapper);
-            activeItems.set(id, { element: wrapper, data: data });
+            activeItemsMap.set(id, { element: wrapper, data: data });
         }
 
-        function removeKrathong(id) {
-            const element = document.getElementById(`krathong-${id}`);
-            if (element) element.remove();
-            krathongsMap.delete(id);
-            activeItems.delete(id);
+        function removeItem(id) {
+            const el = document.getElementById(`item-${id}`);
+            if (el) el.remove();
+            activeItemsMap.delete(id);
         }
 
-        // --- Core Animation Loop (Endless Synchronized Animation) ---
+        // --- Core Animation Engine (100% Synchronized) ---
         function animationLoop() {
             const now = Date.now();
             const wWidth = window.innerWidth;
             const wHeight = window.innerHeight;
 
-            activeItems.forEach((item) => {
-                // คำนวณอายุของไอเทมว่าสร้างมานานแค่ไหนแล้ว
+            activeItemsMap.forEach((item) => {
                 const ageMs = now - (item.data.createdAt || now);
-                const durationMs = (item.data.duration || 30) * 1000;
+                const durationMs = (item.data.duration || 45) * 1000;
                 
-                // หาค่าสถานะเปอร์เซ็นต์แบบวนลูป 0.0 ถึง 1.0 (รับประกันว่าไม่มีวันหายไป)
+                // Calculates strict modular deterministic progress
                 let progress = (ageMs / durationMs) % 1;
                 if (progress < 0) progress += 1; 
 
                 if (item.data.type === 'lantern') {
-                    // โคมลอย: ลอยขึ้นจากด้านล่างจอ ไปจนทะลุขอบบน
-                    const startY = -150; 
-                    const endY = wHeight + 200;
-                    const currentBottom = startY + (progress * (endY - startY));
+                    // Lantern: Bottom to Top diagonal floating
+                    const startBottom = -150; 
+                    const endBottom = wHeight + 200;
+                    const currentBottom = startBottom + (progress * (endBottom - startBottom));
                     item.element.style.bottom = `${currentBottom}px`;
+                    
+                    // Minor diagonal wind drift based on depth
+                    const leftDrift = (item.data.depthPercent) + (progress * 20); 
+                    item.element.style.left = `${leftDrift % 100}%`;
+
                 } else {
-                    // กระทง: ลอยไปทางขวา จากซ้ายสุด ไปยัง ขวาสุด
-                    const startX = -250;
-                    const endX = wWidth + 200;
-                    const currentLeft = startX + (progress * (endX - startX));
+                    // Krathong: Right to Left Flow (As requested)
+                    const startX = wWidth + 200; // Start offscreen right
+                    const endX = -250;           // End offscreen left
+                    const currentLeft = startX - (progress * (startX - endX));
                     item.element.style.left = `${currentLeft}px`;
                 }
             });
@@ -924,17 +724,11 @@
             requestAnimationFrame(animationLoop);
         }
 
-        function escapeHtml(unsafe) {
-            if (!unsafe) return "";
-            return unsafe
-                 .replace(/&/g, "&amp;")
-                 .replace(/</g, "&lt;")
-                 .replace(/>/g, "&gt;")
-                 .replace(/"/g, "&quot;")
-                 .replace(/'/g, "&#039;");
+        function escapeHtml(str) {
+            if (!str) return "";
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
         }
 
-        // Bootstrap App
         window.addEventListener('DOMContentLoaded', initApp);
     </script>
 </body>
