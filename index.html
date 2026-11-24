@@ -97,6 +97,17 @@
 </head>
 <body class="text-white flex flex-col relative">
 
+    <!-- Room Info & Share Button -->
+    <div class="absolute top-4 right-4 md:top-6 md:right-6 z-40 flex flex-col items-end gap-2">
+        <div class="glass-panel px-3 py-1.5 rounded-lg text-[10px] md:text-xs text-blue-200 border-white/10 flex items-center gap-2 shadow-lg backdrop-blur-md">
+            <span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span>
+            <span id="display-room-id" class="font-mono tracking-wider text-white">รหัสห้อง: ...</span>
+        </div>
+        <button id="btn-copy-link" class="glass-panel px-3 py-2 rounded-lg text-xs md:text-sm text-white hover:bg-white/20 hover:scale-105 transition-all flex items-center gap-2 border-white/20 shadow-[0_0_15px_rgba(255,255,255,0.1)] active:scale-95">
+            <span class="text-base">🔗</span> <span class="hidden sm:inline font-medium">คัดลอกลิงก์ชวนเพื่อน</span><span class="sm:hidden font-medium">แชร์ลิงก์</span>
+        </button>
+    </div>
+
     <!-- Sky Section -->
     <div id="sky" class="sky-gradient h-[55%] relative w-full z-0 overflow-hidden">
         <!-- Moon -->
@@ -354,6 +365,29 @@
             document.getElementById('btn-open-lantern').addEventListener('click', () => openModal('lantern'));
             document.getElementById('btn-close-modal').addEventListener('click', closeModal);
             modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+            // Set UI Room ID
+            document.getElementById('display-room-id').innerText = `Room ID: ${appId}`;
+
+            // Copy Link Functionality (iFrame Safe)
+            document.getElementById('btn-copy-link').addEventListener('click', () => {
+                const url = window.location.href;
+                const textArea = document.createElement("textarea");
+                textArea.value = url;
+                textArea.style.position = "fixed"; // Avoid scrolling to bottom
+                textArea.style.left = "-9999px";
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    showToast('🔗 คัดลอกลิงก์สำเร็จ! ส่งให้เพื่อนได้เลย', false);
+                } catch (err) {
+                    console.error('Fallback copy failed', err);
+                    showToast('คัดลอกลิงก์ไม่สำเร็จ กรุณากดแชร์จากเบราว์เซอร์', true);
+                }
+                document.body.removeChild(textArea);
+            });
 
             // Image Compression to Max 64x64
             document.getElementById('input-image').addEventListener('change', (e) => {
